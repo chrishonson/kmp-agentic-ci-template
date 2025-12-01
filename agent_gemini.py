@@ -101,10 +101,18 @@ def main():
     # Check Task Queue
     if os.path.exists("tasks.txt"):
         with open("tasks.txt", "r") as f:
-            tasks = [line.strip() for line in f.readlines() if line.strip()]
+            lines = f.readlines()
         
-        if tasks:
-            current_task = tasks[0]
+        # Find first unchecked task
+        task_index = -1
+        current_task = ""
+        for i, line in enumerate(lines):
+            if line.strip() and not line.strip().startswith("[x]"):
+                task_index = i
+                current_task = line.strip()
+                break
+        
+        if task_index != -1:
             print(f"\n▶️ Processing Task: {current_task}")
             
             # Load Context
@@ -141,10 +149,16 @@ def main():
                 response = chat.send_message(prompt)
                 print(f"\n🧠 Agent Report:\n{response.text}")
                 
+                # Mark task as done if successful (assuming no exception)
+                lines[task_index] = f"[x] {lines[task_index]}"
+                with open("tasks.txt", "w") as f:
+                    f.writelines(lines)
+                print(f"✅ Marked task as done: {current_task}")
+                
             except Exception as e:
                 print(f"❌ Error: {e}")
         else:
-            print("Task queue is empty.")
+            print("Task queue is empty (all tasks completed).")
     else:
         print("No tasks.txt found.")
 
