@@ -8,7 +8,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class VirtualCardStore(private val cardDetailsService: CardDetailsService = CardDetailsService()) : ViewModel() {
+class VirtualCardStore(
+    private val cardDetailsService: CardDetailsService = CardDetailsService(),
+    private val analyticsService: AnalyticsService = MockAnalyticsService()
+) : ViewModel() {
+
+    private val analyticsMiddleware: AnalyticsMiddleware = AnalyticsMiddleware(analyticsService)
 
     private val _state = MutableStateFlow(VirtualCardState())
     val state: StateFlow<VirtualCardState> = _state.asStateFlow()
@@ -20,11 +25,18 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
     }
 
     fun dispatch(intent: VirtualCardIntent) {
+        analyticsMiddleware.logEvent(intent, _state.value)
         when (intent) {
-            VirtualCardIntent.ToggleVisibility -> toggleVisibility()
+            VirtualCardIntent.ToggleVisibility -> {
+                toggleVisibility()
+            }
             VirtualCardIntent.LoadCardDetails -> loadCardDetails()
-            VirtualCardIntent.ToggleLock -> toggleLock()
-            VirtualCardIntent.ReplaceCard -> replaceCard()
+            VirtualCardIntent.ToggleLock -> {
+                toggleLock()
+            }
+            VirtualCardIntent.ReplaceCard -> {
+                replaceCard()
+            }
         }
     }
 
@@ -50,13 +62,13 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
     
     private fun toggleLock() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, loadingMessage = if (it.isLocked) "UNLOCKING CARD" else "LOCKING CARD") }
-            val success = if (_state.value.isLocked) cardDetailsService.unlockCard() else cardDetailsService.lockCard()
+            val currentLocked = _state.value.isLocked
+            val message = if (currentLocked) "UNLOCKING CARD" else "LOCKING CARD"
+            _state.update { it.copy(isLoading = true, loadingMessage = message) }
+            val success = if (currentLocked) cardDetailsService.unlockCard() else cardDetailsService.lockCard()
             if (success) {
                 _state.update { currentState ->
                     val newLocked = !currentState.isLocked
-                    // Simplification: directly update state without _cachedCardDetails?.let for locking/unlocking.
-                    // This will be handled in a separate step if necessary.
                     currentState.copy(
                         isLocked = newLocked,
                         isRevealed = if (newLocked) false else currentState.isRevealed, // Hide details if locking
@@ -67,14 +79,19 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
                 }
             } else {
                 _state.update { it.copy(isLoading = false, loadingMessage = null) }
-                // Handle error or show a message to the user if locking/unlocking failed
             }
         }
     }
 
     private fun loadCardDetails() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, isRevealed = false, buttonText = "Reveal Details", isLocked = false, loadingMessage = "LOADING CARD DETAILS") }
+            _state.update { it.copy(
+                isLoading = true, 
+                isRevealed = false, 
+                buttonText = "Reveal Details", 
+                isLocked = false,
+                loadingMessage = "LOADING CARD DETAILS"
+            ) }
             val cardDetails = cardDetailsService.fetchCardDetails()
             _cachedCardDetails = cardDetails
             _state.update { currentState ->
@@ -95,7 +112,13 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
 
     private fun replaceCard() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, isRevealed = false, buttonText = "Reveal Details", isLocked = false, loadingMessage = "REPLACING CARD") }
+            _state.update { it.copy(
+                isLoading = true, 
+                isRevealed = false, 
+                buttonText = "Reveal Details", 
+                isLocked = false,
+                loadingMessage = "LOADING NEW CARD"
+            ) }
             val newCardDetails = cardDetailsService.replaceCard()
             _cachedCardDetails = newCardDetails
             _state.update { currentState ->
@@ -105,7 +128,7 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
                     expiry = "**/**",
                     cvv = "***",
                     isLoading = false,
-                    isRevealed = false,
+                    isRevealed = false, 
                     buttonText = "Reveal Details",
                     isLocked = false,
                     loadingMessage = null

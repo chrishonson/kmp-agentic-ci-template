@@ -13,4 +13,24 @@ open class CardDetailsService {
             cvv = "123"
         )
     }
+
+    open suspend fun lockCard(): Boolean {
+        delay(1000)
+        return true
+    }
+
+    open suspend fun unlockCard(): Boolean {
+        delay(1000)
+        return true
+    }
+
+    open suspend fun replaceCard(): CardDetails {
+        delay(2000)
+        return CardDetails(
+            cardNumber = "9876 5432 1098 7654",
+            cardHolder = "Nick Antigravity",
+            expiry = "01/30",
+            cvv = "456"
+        )
+    }
 }

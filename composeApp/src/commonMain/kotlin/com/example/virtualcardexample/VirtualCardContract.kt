@@ -8,13 +8,15 @@ data class VirtualCardState(
     val isRevealed: Boolean = false,
     val isLocked: Boolean = false,
     val buttonText: String = "Reveal Details",
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val loadingMessage: String? = null
 )
 
 sealed interface VirtualCardIntent {
     data object ToggleVisibility : VirtualCardIntent
     data object ToggleLock : VirtualCardIntent
     data object LoadCardDetails : VirtualCardIntent
+    data object ReplaceCard : VirtualCardIntent
 }
 
 // Data class to represent the fetched card details
