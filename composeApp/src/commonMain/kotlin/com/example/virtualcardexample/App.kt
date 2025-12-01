@@ -22,6 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 @Composable
 @Preview
@@ -42,16 +53,17 @@ fun VirtualCardScreen() {
             .background(MaterialTheme.colorScheme.background)
             .safeContentPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        verticalArrangement = Arrangement.Center
     ) {
         VirtualCard(
             cardNumber = state.cardNumber,
             cardHolder = state.cardHolder,
             expiry = state.expiry,
-            cvv = state.cvv
+            cvv = state.cvv,
+            isLoading = state.isLoading
         )
         
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
         Button(
             onClick = { store.dispatch(VirtualCardIntent.ToggleVisibility) },
@@ -67,7 +79,8 @@ fun VirtualCard(
     cardNumber: String,
     cardHolder: String,
     expiry: String,
-    cvv: String
+    cvv: String,
+    isLoading: Boolean
 ) {
     Card(
         modifier = Modifier
@@ -85,7 +98,7 @@ fun VirtualCard(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        brush = Brush.linearGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary,
                                 MaterialTheme.colorScheme.tertiary
@@ -94,84 +107,93 @@ fun VirtualCard(
                     )
             )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
-            ) {
-                // Bank Name / Logo Placeholder
-                Text(
-                    text = "NeoBank",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = androidx.compose.ui.graphics.Color.White,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-
-                // Chip
+            if (isLoading) {
                 Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.semantics { contentDescription = "Loading" })
+                }
+            } else {
+                Column(
                     modifier = Modifier
-                        .width(50.dp)
-                        .height(35.dp)
-                        .background(
-                            color = androidx.compose.ui.graphics.Color(0xFFE0E0E0),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-                        )
-                )
-
-                // Card Details
-                Column {
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Bank Name / Logo Placeholder
                     Text(
-                        text = cardNumber,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = androidx.compose.ui.graphics.Color.White,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        modifier = Modifier.testTag("CardNumber")
+                        text = "NeoBank",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
-                    
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
-                    
-                    androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "CARD HOLDER",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
+
+                    // Chip
+                    Box(
+                        modifier = Modifier
+                            .width(50.dp)
+                            .height(35.dp)
+                            .background(
+                                color = Color(0xFFE0E0E0),
+                                shape = RoundedCornerShape(4.dp)
                             )
-                            Text(
-                                text = cardHolder,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = androidx.compose.ui.graphics.Color.White
-                            )
-                        }
+                    )
+
+                    // Card Details
+                    Column {
+                        Text(
+                            text = cardNumber,
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color.White,
+                            fontFamily = FontFamily.Monospace,
+                            modifier = Modifier.testTag("CardNumber")
+                        )
                         
-                        Column {
-                            Text(
-                                text = "EXPIRES",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
-                            )
-                            Text(
-                                text = expiry,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = androidx.compose.ui.graphics.Color.White
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                         
-                         Column {
-                            Text(
-                                text = "CVV",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
-                            )
-                            Text(
-                                text = cvv,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = androidx.compose.ui.graphics.Color.White
-                            )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "CARD HOLDER",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    text = cardHolder,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                            }
+                            
+                            Column {
+                                Text(
+                                    text = "EXPIRES",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    text = expiry,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                            }
+                            
+                             Column {
+                                Text(
+                                    text = "CVV",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    text = cvv,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }

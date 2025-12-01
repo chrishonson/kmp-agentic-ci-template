@@ -11,7 +11,7 @@ load_dotenv()
 
 # Configuration
 API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = "gemini-3-pro-latest"
+MODEL_NAME = "gemini-2.5-flash"
 
 # --- TOOLS ---
 
@@ -131,6 +131,7 @@ def main():
             3. Modify or create files using 'write_file'.
             4. Verify your work using 'run_shell' (e.g., run tests).
             5. If verification fails, fix the code and retry.
+            6. Commit your changes using 'run_shell' (e.g., git commit).
             
             Go!
             """
