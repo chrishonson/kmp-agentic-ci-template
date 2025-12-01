@@ -41,9 +41,11 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
         val androidInstrumentedTest by getting {
             dependencies {
@@ -91,7 +93,7 @@ kover {
     reports {
         filters {
             includes {
-                classes("com.example.virtualcardexample.VirtualCardPresenter")
+                classes("com.example.virtualcardexample.VirtualCardStore")
             }
         }
         verify {

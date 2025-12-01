@@ -14,7 +14,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -31,8 +33,8 @@ fun App() {
 
 @Composable
 fun VirtualCardScreen() {
-    var isRevealed by remember { mutableStateOf(false) }
-    val presenter = remember { VirtualCardPresenter() }
+    val store = androidx.lifecycle.viewmodel.compose.viewModel { VirtualCardStore() }
+    val state by store.state.collectAsState()
 
     Column(
         modifier = Modifier
@@ -42,26 +44,21 @@ fun VirtualCardScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
     ) {
-        VirtualCard(isRevealed = isRevealed, presenter = presenter)
+        VirtualCard(state = state)
         
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(32.dp))
         
         Button(
-            onClick = { isRevealed = !isRevealed },
+            onClick = { store.dispatch(VirtualCardIntent.ToggleVisibility) },
             modifier = Modifier.testTag("RevealButton")
         ) {
-            Text(presenter.getButtonText(isRevealed))
+            Text(state.buttonText)
         }
     }
 }
 
 @Composable
-fun VirtualCard(isRevealed: Boolean, presenter: VirtualCardPresenter) {
-    val cardNumber = presenter.getCardNumber(isRevealed)
-    val cardHolder = "Nick Antigravity"
-    val expiry = presenter.getExpiry(isRevealed)
-    val cvv = presenter.getCvv(isRevealed)
-
+fun VirtualCard(state: VirtualCardState) {
     Card(
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -115,7 +112,7 @@ fun VirtualCard(isRevealed: Boolean, presenter: VirtualCardPresenter) {
                 // Card Details
                 Column {
                     Text(
-                        text = cardNumber,
+                        text = state.cardNumber,
                         style = MaterialTheme.typography.headlineMedium,
                         color = androidx.compose.ui.graphics.Color.White,
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
@@ -135,7 +132,7 @@ fun VirtualCard(isRevealed: Boolean, presenter: VirtualCardPresenter) {
                                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = cardHolder,
+                                text = state.cardHolder,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = androidx.compose.ui.graphics.Color.White
                             )
@@ -148,7 +145,7 @@ fun VirtualCard(isRevealed: Boolean, presenter: VirtualCardPresenter) {
                                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = expiry,
+                                text = state.expiry,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = androidx.compose.ui.graphics.Color.White
                             )
@@ -161,7 +158,7 @@ fun VirtualCard(isRevealed: Boolean, presenter: VirtualCardPresenter) {
                                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = cvv,
+                                text = state.cvv,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = androidx.compose.ui.graphics.Color.White
                             )
