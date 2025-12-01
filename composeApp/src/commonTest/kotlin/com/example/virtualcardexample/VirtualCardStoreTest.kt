@@ -20,6 +20,14 @@ class VirtualCardStoreTest {
 
     // Mock CardDetailsService for testing
     class MockCardDetailsService : CardDetailsService() {
+        var lockCardCalled = false
+        var unlockCardCalled = false
+
+        fun resetCalls() {
+            lockCardCalled = false
+            unlockCardCalled = false
+        }
+
         override suspend fun fetchCardDetails(): CardDetails {
             delay(100) // Simulate a network delay
             return CardDetails(
@@ -29,11 +37,26 @@ class VirtualCardStoreTest {
                 cvv = "789"
             )
         }
+
+        override suspend fun lockCard(): Boolean {
+            lockCardCalled = true
+            delay(100) // Simulate network delay for locking
+            return true
+        }
+
+        override suspend fun unlockCard(): Boolean {
+            unlockCardCalled = true
+            delay(100) // Simulate network delay for unlocking
+            return true
+        }
     }
+
+    private lateinit var mockService: MockCardDetailsService
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        mockService = MockCardDetailsService()
     }
 
     @AfterTest
@@ -43,16 +66,14 @@ class VirtualCardStoreTest {
 
     @Test
     fun testInitialState() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
-        // The init block dispatches LoadCardDetails, which launches a coroutine.
-        // We need to run the dispatcher to allow the coroutine to start and set isLoading to true.
+        val store = VirtualCardStore(mockService)
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(true, store.state.value.isLoading)
         assertEquals(false, store.state.value.isRevealed)
         assertEquals(false, store.state.value.isLocked)
+        assertEquals("LOADING CARD DETAILS", store.state.value.loadingMessage)
 
-        // Advance past the initial loadCardDetails call in the init block (which includes the suspending fetch)
         advanceUntilIdle()
         val state = store.state.value
         
@@ -64,14 +85,14 @@ class VirtualCardStoreTest {
         assertEquals(false, state.isRevealed)
         assertEquals(false, state.isLoading)
         assertEquals(false, state.isLocked)
+        assertEquals(null, state.loadingMessage)
     }
 
     @Test
     fun testToggleVisibility() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
+        val store = VirtualCardStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
-        // Initial check after loading is complete
         assertEquals(false, store.state.value.isRevealed)
         assertEquals(false, store.state.value.isLoading)
         assertEquals(false, store.state.value.isLocked)
@@ -101,7 +122,7 @@ class VirtualCardStoreTest {
 
     @Test
     fun testLoadCardDetails() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
+        val store = VirtualCardStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         // Simulate a revealed state before loading new details
@@ -113,17 +134,15 @@ class VirtualCardStoreTest {
         // Dispatch LoadCardDetails intent
         store.dispatch(VirtualCardIntent.LoadCardDetails)
 
-        // Should be loading immediately after dispatch
         testDispatcher.scheduler.runCurrent() // Allow coroutine to start and update isLoading
         assertEquals(true, store.state.value.isLoading)
         assertEquals(false, store.state.value.isRevealed) // Should reset reveal state
         assertEquals("Reveal Details", store.state.value.buttonText)
         assertEquals(false, store.state.value.isLocked) // Should reset locked state
+        assertEquals("LOADING CARD DETAILS", store.state.value.loadingMessage)
 
-        // Advance past the delay
         advanceUntilIdle()
 
-        // Should no longer be loading and details should be reset
         assertEquals(false, store.state.value.isLoading)
         assertEquals(false, store.state.value.isRevealed)
         assertEquals("**** **** **** 4444", store.state.value.cardNumber)
@@ -132,19 +151,19 @@ class VirtualCardStoreTest {
         assertEquals("***", store.state.value.cvv)
         assertEquals("Reveal Details", store.state.value.buttonText)
         assertEquals(false, store.state.value.isLocked)
+        assertEquals(null, store.state.value.loadingMessage)
     }
 
     @Test
     fun testLoadingStateDuringLoadCardDetails() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
+        val store = VirtualCardStore(mockService)
 
-        // After store creation, init block dispatches LoadCardDetails, which launches a coroutine.
-        // We need to run the dispatcher to allow the coroutine to start and set isLoading to true.
         testDispatcher.scheduler.runCurrent()
         assertEquals(true, store.state.value.isLoading) 
         assertEquals(false, store.state.value.isRevealed)
         assertEquals("Reveal Details", store.state.value.buttonText)
         assertEquals(false, store.state.value.isLocked)
+        assertEquals("LOADING CARD DETAILS", store.state.value.loadingMessage)
         
         advanceUntilIdle() // complete the initial loading
 
@@ -153,57 +172,82 @@ class VirtualCardStoreTest {
         // Dispatch LoadCardDetails again
         store.dispatch(VirtualCardIntent.LoadCardDetails)
 
-        // Should be loading immediately after dispatch
         testDispatcher.scheduler.runCurrent() // Allow coroutine to start and update isLoading
         assertEquals(true, store.state.value.isLoading)
         assertEquals(false, store.state.value.isRevealed) // Should also reset revealed state
         assertEquals(false, store.state.value.isLocked) // Should also reset locked state
+        assertEquals("LOADING CARD DETAILS", store.state.value.loadingMessage)
 
-        // Advance until idle to complete the loading
         advanceUntilIdle()
 
-        // Should no longer be loading
         assertEquals(false, store.state.value.isLoading)
+        assertEquals(null, store.state.value.loadingMessage)
     }
 
     @Test
-    fun testToggleLock_lockCard() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
+    fun testToggleLock_lockCard_loadingState() = runTest {
+        val store = VirtualCardStore(mockService)
         advanceUntilIdle() // Complete initial loading
+        mockService.resetCalls() // Reset mock calls after initial load
 
         // Lock the card
         store.dispatch(VirtualCardIntent.ToggleLock)
+        
+        // After dispatching, the state should immediately reflect loading
+        testDispatcher.scheduler.runCurrent() 
+        assertEquals(true, store.state.value.isLoading)
+        assertEquals("LOCKING CARD", store.state.value.loadingMessage)
+        assertEquals(true, mockService.lockCardCalled) // Corrected: Should be true here
+
+        advanceUntilIdle() // Complete the lock operation including its delay
+
         val lockedState = store.state.value
         assertEquals(true, lockedState.isLocked)
         assertEquals(false, lockedState.isRevealed)
-        assertEquals("**** **** **** 4444", lockedState.cardNumber)
-        assertEquals("Reveal Details", lockedState.buttonText)
+        assertEquals(false, lockedState.isLoading) // Should be false after completion
+        assertEquals(null, lockedState.loadingMessage) // Should be null after completion
+        assertEquals(true, mockService.lockCardCalled) // Should have been called
     }
 
     @Test
-    fun testToggleLock_unlockCard() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
+    fun testToggleLock_unlockCard_loadingState() = runTest {
+        val store = VirtualCardStore(mockService)
         advanceUntilIdle() // Complete initial loading
+        mockService.resetCalls() // Reset mock calls after initial load
 
-        // Lock the card first
+        // Lock the card first, and wait for it to complete
         store.dispatch(VirtualCardIntent.ToggleLock)
+        advanceUntilIdle()
         assertEquals(true, store.state.value.isLocked)
+        mockService.resetCalls() // Reset mock calls after locking the card
 
         // Unlock the card
         store.dispatch(VirtualCardIntent.ToggleLock)
+
+        // After dispatching, the state should immediately reflect loading
+        testDispatcher.scheduler.runCurrent() 
+        assertEquals(true, store.state.value.isLoading)
+        assertEquals("UNLOCKING CARD", store.state.value.loadingMessage)
+        assertEquals(true, mockService.unlockCardCalled) // Corrected: Should be true here
+
+        advanceUntilIdle() // Complete the unlock operation including its delay
+        
         val unlockedState = store.state.value
         assertEquals(false, unlockedState.isLocked)
         assertEquals(false, unlockedState.isRevealed) // Should remain hidden after unlock
-        assertEquals("Reveal Details", unlockedState.buttonText)
+        assertEquals(false, unlockedState.isLoading) // Should be false after completion
+        assertEquals(null, unlockedState.loadingMessage) // Should be null after completion
+        assertEquals(true, mockService.unlockCardCalled) // Should have been called
     }
 
     @Test
     fun testToggleLock_thenToggleVisibility() = runTest {
-        val store = VirtualCardStore(MockCardDetailsService())
+        val store = VirtualCardStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         // Lock the card
         store.dispatch(VirtualCardIntent.ToggleLock)
+        advanceUntilIdle()
         assertEquals(true, store.state.value.isLocked)
 
         // Try to reveal details (should not work while locked)
@@ -215,6 +259,7 @@ class VirtualCardStoreTest {
 
         // Unlock the card
         store.dispatch(VirtualCardIntent.ToggleLock)
+        advanceUntilIdle()
         assertEquals(false, store.state.value.isLocked)
 
         // Now reveal details (should work)
@@ -224,5 +269,41 @@ class VirtualCardStoreTest {
         assertEquals(true, stateAfterUnlockedVisibility.isRevealed)
         assertEquals("Hide Details", stateAfterUnlockedVisibility.buttonText)
         assertEquals("1111 2222 3333 4444", stateAfterUnlockedVisibility.cardNumber)
+    }
+
+    @Test
+    fun testToggleLock_lockCard_finalState() = runTest {
+        val store = VirtualCardStore(mockService)
+        advanceUntilIdle() // Complete initial loading
+
+        // Lock the card
+        store.dispatch(VirtualCardIntent.ToggleLock)
+        advanceUntilIdle() // Complete the lock operation
+
+        val lockedState = store.state.value
+        assertEquals(true, lockedState.isLocked)
+        assertEquals(false, lockedState.isRevealed)
+        assertEquals("**** **** **** 4444", lockedState.cardNumber)
+        assertEquals("Reveal Details", lockedState.buttonText)
+    }
+
+    @Test
+    fun testToggleLock_unlockCard_finalState() = runTest {
+        val store = VirtualCardStore(mockService)
+        advanceUntilIdle() // Complete initial loading
+
+        // Lock the card first
+        store.dispatch(VirtualCardIntent.ToggleLock)
+        advanceUntilIdle()
+        assertEquals(true, store.state.value.isLocked)
+
+        // Unlock the card
+        store.dispatch(VirtualCardIntent.ToggleLock)
+        advanceUntilIdle() // Complete the unlock operation
+
+        val unlockedState = store.state.value
+        assertEquals(false, unlockedState.isLocked)
+        assertEquals(false, unlockedState.isRevealed) // Should remain hidden after unlock
+        assertEquals("Reveal Details", unlockedState.buttonText)
     }
 }

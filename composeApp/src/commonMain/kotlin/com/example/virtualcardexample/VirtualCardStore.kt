@@ -48,30 +48,32 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
     }
     
     private fun toggleLock() {
-        _state.update { currentState ->
-            val newLocked = !currentState.isLocked
-            if (newLocked) {
-                // If locking the card, hide details and reset button text
-                _cachedCardDetails?.let { details ->
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, loadingMessage = if (it.isLocked) "UNLOCKING CARD" else "LOCKING CARD") }
+            val success = if (_state.value.isLocked) cardDetailsService.unlockCard() else cardDetailsService.lockCard()
+            if (success) {
+                _state.update { currentState ->
+                    val newLocked = !currentState.isLocked
+                    // Simplification: directly update state without _cachedCardDetails?.let for locking/unlocking.
+                    // This will be handled in a separate step if necessary.
                     currentState.copy(
                         isLocked = newLocked,
-                        isRevealed = false,
-                        cardNumber = "**** **** **** ${details.cardNumber.takeLast(4)}",
-                        expiry = "**/**",
-                        cvv = "***",
-                        buttonText = "Reveal Details"
+                        isRevealed = if (newLocked) false else currentState.isRevealed, // Hide details if locking
+                        buttonText = if (newLocked) "Reveal Details" else currentState.buttonText, // Reset button if locking
+                        isLoading = false,
+                        loadingMessage = null
                     )
-                } ?: currentState.copy(isLocked = newLocked, isRevealed = false, buttonText = "Reveal Details")
+                }
             } else {
-                // If unlocking, keep current visibility state
-                currentState.copy(isLocked = newLocked)
+                _state.update { it.copy(isLoading = false, loadingMessage = null) }
+                // Handle error or show a message to the user if locking/unlocking failed
             }
         }
     }
 
     private fun loadCardDetails() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, isRevealed = false, buttonText = "Reveal Details", isLocked = false) }
+            _state.update { it.copy(isLoading = true, isRevealed = false, buttonText = "Reveal Details", isLocked = false, loadingMessage = "LOADING CARD DETAILS") }
             val cardDetails = cardDetailsService.fetchCardDetails()
             _cachedCardDetails = cardDetails
             _state.update { currentState ->
@@ -83,7 +85,8 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
                     isLoading = false,
                     isRevealed = false,
                     buttonText = "Reveal Details",
-                    isLocked = false
+                    isLocked = false,
+                    loadingMessage = null
                 )
             }
         }
