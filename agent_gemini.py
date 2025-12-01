@@ -95,7 +95,7 @@ def setup_gemini():
 
 def send_message_with_retry(chat, prompt, max_retries=5):
     """Sends a message to Gemini with exponential backoff for rate limits."""
-    delay = 2
+    delay = 16
     for attempt in range(max_retries):
         try:
             return chat.send_message(prompt)
