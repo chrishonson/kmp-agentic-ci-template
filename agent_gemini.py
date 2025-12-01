@@ -100,65 +100,68 @@ def main():
 
     # Check Task Queue
     if os.path.exists("tasks.txt"):
-        with open("tasks.txt", "r") as f:
-            lines = f.readlines()
-        
-        # Find first unchecked task
-        task_index = -1
-        current_task = ""
-        for i, line in enumerate(lines):
-            if line.strip() and not line.strip().startswith("[x]"):
-                task_index = i
-                current_task = line.strip()
-                break
-        
-        if task_index != -1:
-            print(f"\n▶️ Processing Task: {current_task}")
+        while True:
+            with open("tasks.txt", "r") as f:
+                lines = f.readlines()
             
-            # Load Context
-            architecture_guide = ""
-            if os.path.exists("ARCHITECTURE.md"):
-                architecture_guide = read_file("ARCHITECTURE.md")
+            # Find first unchecked task
+            task_index = -1
+            current_task = ""
+            for i, line in enumerate(lines):
+                if line.strip() and not line.strip().startswith("[x]"):
+                    task_index = i
+                    current_task = line.strip()
+                    break
             
-            project_files = list_files()
+            if task_index != -1:
+                print(f"\n▶️ Processing Task: {current_task}")
+                
+                # Load Context
+                architecture_guide = ""
+                if os.path.exists("ARCHITECTURE.md"):
+                    architecture_guide = read_file("ARCHITECTURE.md")
+                
+                project_files = list_files()
 
-            prompt = f"""You are the Night Shift Agent, an autonomous coding assistant.
-            
-            SYSTEM INSTRUCTIONS:
-            {architecture_guide}
-            
-            PROJECT FILES:
-            {project_files}
-            
-            TASK:
-            {current_task}
-            
-            INSTRUCTIONS:
-            1. Analyze the task.
-            2. Read necessary files to understand the code.
-            3. Modify or create files using 'write_file'.
-            4. Verify your work using 'run_shell' (e.g., run tests).
-            5. If verification fails, fix the code and retry.
-            6. Commit your changes using 'run_shell' (e.g., git commit).
-            
-            Go!
-            """
-            
-            try:
-                # The chat session handles the tool loop automatically with enable_automatic_function_calling=True
-                response = chat.send_message(prompt)
-                print(f"\n🧠 Agent Report:\n{response.text}")
+                prompt = f"""You are the Night Shift Agent, an autonomous coding assistant.
                 
-                # Mark task as done if successful (assuming no exception)
-                lines[task_index] = f"[x] {lines[task_index]}"
-                with open("tasks.txt", "w") as f:
-                    f.writelines(lines)
-                print(f"✅ Marked task as done: {current_task}")
+                SYSTEM INSTRUCTIONS:
+                {architecture_guide}
                 
-            except Exception as e:
-                print(f"❌ Error: {e}")
-        else:
-            print("Task queue is empty (all tasks completed).")
+                PROJECT FILES:
+                {project_files}
+                
+                TASK:
+                {current_task}
+                
+                INSTRUCTIONS:
+                1. Analyze the task.
+                2. Read necessary files to understand the code.
+                3. Modify or create files using 'write_file'.
+                4. Verify your work using 'run_shell' (e.g., run tests).
+                5. If verification fails, fix the code and retry.
+                6. Commit your changes using 'run_shell' (e.g., git commit).
+                
+                Go!
+                """
+                
+                try:
+                    # The chat session handles the tool loop automatically with enable_automatic_function_calling=True
+                    response = chat.send_message(prompt)
+                    print(f"\n🧠 Agent Report:\n{response.text}")
+                    
+                    # Mark task as done if successful (assuming no exception)
+                    lines[task_index] = f"[x] {lines[task_index]}"
+                    with open("tasks.txt", "w") as f:
+                        f.writelines(lines)
+                    print(f"✅ Marked task as done: {current_task}")
+                    
+                except Exception as e:
+                    print(f"❌ Error: {e}")
+                    break # Stop on error to avoid infinite loops or broken state
+            else:
+                print("Task queue is empty (all tasks completed).")
+                break
     else:
         print("No tasks.txt found.")
 
