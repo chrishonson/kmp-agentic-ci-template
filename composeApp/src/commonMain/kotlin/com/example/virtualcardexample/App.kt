@@ -44,7 +44,12 @@ fun VirtualCardScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
     ) {
-        VirtualCard(state = state)
+        VirtualCard(
+            cardNumber = state.cardNumber,
+            cardHolder = state.cardHolder,
+            expiry = state.expiry,
+            cvv = state.cvv
+        )
         
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(32.dp))
         
@@ -58,7 +63,12 @@ fun VirtualCardScreen() {
 }
 
 @Composable
-fun VirtualCard(state: VirtualCardState) {
+fun VirtualCard(
+    cardNumber: String,
+    cardHolder: String,
+    expiry: String,
+    cvv: String
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -112,7 +122,7 @@ fun VirtualCard(state: VirtualCardState) {
                 // Card Details
                 Column {
                     Text(
-                        text = state.cardNumber,
+                        text = cardNumber,
                         style = MaterialTheme.typography.headlineMedium,
                         color = androidx.compose.ui.graphics.Color.White,
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
@@ -132,7 +142,7 @@ fun VirtualCard(state: VirtualCardState) {
                                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = state.cardHolder,
+                                text = cardHolder,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = androidx.compose.ui.graphics.Color.White
                             )
@@ -145,7 +155,7 @@ fun VirtualCard(state: VirtualCardState) {
                                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = state.expiry,
+                                text = expiry,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = androidx.compose.ui.graphics.Color.White
                             )
@@ -158,7 +168,7 @@ fun VirtualCard(state: VirtualCardState) {
                                 color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = state.cvv,
+                                text = cvv,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = androidx.compose.ui.graphics.Color.White
                             )
