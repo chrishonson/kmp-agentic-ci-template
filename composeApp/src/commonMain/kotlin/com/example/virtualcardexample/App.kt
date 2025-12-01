@@ -83,6 +83,16 @@ fun VirtualCardScreen() {
         ) {
             Text(if (state.isLocked) "Unlock Card" else "Lock Card")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { store.dispatch(VirtualCardIntent.ReplaceCard) },
+            modifier = Modifier.testTag("ReplaceCardButton"),
+            enabled = !state.isLocked && !state.isLoading
+        ) {
+            Text("Replace Card")
+        }
     }
 }
 

@@ -24,6 +24,7 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
             VirtualCardIntent.ToggleVisibility -> toggleVisibility()
             VirtualCardIntent.LoadCardDetails -> loadCardDetails()
             VirtualCardIntent.ToggleLock -> toggleLock()
+            VirtualCardIntent.ReplaceCard -> replaceCard()
         }
     }
 
@@ -82,6 +83,27 @@ class VirtualCardStore(private val cardDetailsService: CardDetailsService = Card
                     cardHolder = cardDetails.cardHolder,
                     expiry = "**/**", // Mask expiry initially
                     cvv = "***", // Mask CVV initially
+                    isLoading = false,
+                    isRevealed = false,
+                    buttonText = "Reveal Details",
+                    isLocked = false,
+                    loadingMessage = null
+                )
+            }
+        }
+    }
+
+    private fun replaceCard() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, isRevealed = false, buttonText = "Reveal Details", isLocked = false, loadingMessage = "REPLACING CARD") }
+            val newCardDetails = cardDetailsService.replaceCard()
+            _cachedCardDetails = newCardDetails
+            _state.update { currentState ->
+                currentState.copy(
+                    cardNumber = "**** **** **** ${newCardDetails.cardNumber.takeLast(4)}",
+                    cardHolder = newCardDetails.cardHolder,
+                    expiry = "**/**",
+                    cvv = "***",
                     isLoading = false,
                     isRevealed = false,
                     buttonText = "Reveal Details",
