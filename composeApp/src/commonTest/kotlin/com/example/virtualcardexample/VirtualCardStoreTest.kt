@@ -317,6 +317,7 @@ class VirtualCardStoreTest {
         val initialCardNumberLast4 = store.state.value.cardNumber.takeLast(4)
 
         store.dispatch(VirtualCardIntent.ReplaceCard)
+        testDispatcher.scheduler.runCurrent()
         assertTrue(store.state.value.isLoading)
         assertEquals("LOADING NEW CARD", store.state.value.loadingMessage)
 
