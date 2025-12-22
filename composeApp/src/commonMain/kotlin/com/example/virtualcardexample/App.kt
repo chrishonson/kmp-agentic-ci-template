@@ -34,6 +34,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 
+private const val CARD_WIDTH_FRACTION = 0.9f
+private const val CHIP_COLOR = 0xFFE0E0E0
+
 @Composable
 @Preview
 fun App() {
@@ -63,9 +66,9 @@ fun VirtualCardScreen() {
             isLoading = state.isLoading,
             isLocked = state.isLocked
         )
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         Button(
             onClick = { store.dispatch(VirtualCardIntent.ToggleVisibility) },
             modifier = Modifier.testTag("RevealButton"),
@@ -107,7 +110,7 @@ fun VirtualCard(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(0.9f)
+            .fillMaxWidth(CARD_WIDTH_FRACTION)
             .height(220.dp)
             .testTag("CreditCard"),
         colors = CardDefaults.cardColors(
@@ -135,7 +138,10 @@ fun VirtualCard(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.semantics { contentDescription = "Loading" })
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.semantics { contentDescription = "Loading" }
+                    )
                 }
             } else if (isLocked) {
                 Box(
@@ -170,7 +176,7 @@ fun VirtualCard(
                             .width(50.dp)
                             .height(35.dp)
                             .background(
-                                color = Color(0xFFE0E0E0),
+                                color = Color(CHIP_COLOR),
                                 shape = RoundedCornerShape(4.dp)
                             )
                     )
@@ -184,9 +190,9 @@ fun VirtualCard(
                             fontFamily = FontFamily.Monospace,
                             modifier = Modifier.testTag("CardNumber")
                         )
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -203,7 +209,7 @@ fun VirtualCard(
                                     color = Color.White
                                 )
                             }
-                            
+
                             Column {
                                 Text(
                                     text = "EXPIRES",
@@ -216,7 +222,7 @@ fun VirtualCard(
                                     color = Color.White
                                 )
                             }
-                            
+
                              Column {
                                 Text(
                                     text = "CVV",

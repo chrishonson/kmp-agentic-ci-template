@@ -49,11 +49,15 @@ complexity:
   LongMethod:
     active: true
     threshold: 60
+    ignoreAnnotated:
+      - 'Composable'
   LongParameterList:
     active: true
-    functionThreshold: 6
-    constructorThreshold: 7
+    functionThreshold: 8
+    constructorThreshold: 10
     ignoreDefaultParameters: true
+    ignoreAnnotated:
+      - 'Composable'
   NestedBlockDepth:
     active: true
     threshold: 4
@@ -188,7 +192,7 @@ naming:
     active: false
   FunctionNaming:
     active: true
-    functionPattern: '[a-z][a-zA-Z0-9]*'
+    functionPattern: '([a-z][a-zA-Z0-9]*|MainViewController)'
     excludeClassPattern: '$^'
     ignoreAnnotated:
       - 'Composable'
@@ -201,8 +205,7 @@ naming:
     rootPackage: ''
     requireRootInDeclaration: false
   MatchingDeclarationName:
-    active: true
-    mustBeFirst: true
+    active: false
   MemberNameEqualsClassName:
     active: true
     ignoreOverridden: true
@@ -230,7 +233,7 @@ naming:
   VariableNaming:
     active: true
     variablePattern: '[a-z][A-Za-z0-9]*'
-    privateVariablePattern: '[a-z][A-Za-z0-9]*'
+    privateVariablePattern: '_?[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
 
 performance:

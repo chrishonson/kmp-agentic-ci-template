@@ -2,17 +2,13 @@ package com.example.virtualcardexample
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import org.junit.Rule
 import org.junit.Test
-import androidx.compose.ui.test.hasContentDescription
-
-import androidx.compose.ui.test.onNodeWithText
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-
 
 class VirtualCardUITest {
 
@@ -22,9 +18,10 @@ class VirtualCardUITest {
     @Test
     fun testRevealButtonShowsDetails() {
         // Start the app - MainActivity calls App() automatically
-        // composeTestRule.setContent { VirtualCardScreen() } // Not needed if MainActivity sets it, but we can override or just verify what's on screen.
-        
-        // If we want to test VirtualCardScreen specifically in isolation we could use createComposeRule, 
+        // composeTestRule.setContent { VirtualCardScreen() }
+        // Not needed if MainActivity sets it, but we can override or just verify what's on screen.
+
+        // If we want to test VirtualCardScreen specifically in isolation we could use createComposeRule,
         // but since we had issues, let's use the Activity rule.
         // MainActivity calls App(), which calls VirtualCardScreen().
         // So we don't need setContent unless we want to override.
@@ -39,7 +36,7 @@ class VirtualCardUITest {
         // Check initial state (Hidden)
         composeTestRule.onNodeWithTag("RevealButton").assertIsDisplayed()
         composeTestRule.onNodeWithTag("RevealButton").assertTextEquals("Reveal Details")
-        
+
         // Card Number should be masked, with the last 4 digits visible from the default mock data
         composeTestRule.onNodeWithTag("CardNumber").assertTextEquals("**** **** **** 3456")
 
