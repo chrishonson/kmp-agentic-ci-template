@@ -1,0 +1,59 @@
+2025-12-22 21:32:48,656 | INFO | 📖 Read file: ARCHITECTURE.md (1642 bytes)
+2025-12-22 21:32:48,656 | INFO | 📂 Listing files in: .
+2025-12-22 21:32:48,658 | INFO | 
+============================================================
+2025-12-22 21:32:48,658 | INFO | 🍴 PHASE 0: Setting Up Fork
+2025-12-22 21:32:48,658 | INFO | ============================================================
+2025-12-22 21:32:48,658 | INFO | 🍴 Setting up fork...
+2025-12-22 21:32:48,966 | INFO | ✅ Fork remote already exists
+2025-12-22 21:32:48,967 | INFO | 
+============================================================
+2025-12-22 21:32:48,967 | INFO | 📋 PHASE 1: Processing Tasks
+2025-12-22 21:32:48,967 | INFO | ============================================================
+2025-12-22 21:32:48,986 | INFO | 🌿 Creating feature branch: nightshift/20251222-213248
+2025-12-22 21:32:49,338 | INFO | ✅ Created branch: nightshift/20251222-213248
+2025-12-22 21:32:49,338 | INFO | 
+============================================================
+2025-12-22 21:32:49,338 | INFO | ▶️ Processing Task 1: Implement a basic non-functional login screen following MVI
+2025-12-22 21:32:49,338 | INFO | ============================================================
+2025-12-22 21:32:49,338 | INFO | 🔄 Iteration 1/50
+2025-12-22 21:32:49,834 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:32:49,835 | INFO | Retrying request to /chat/completions in 0.457645 seconds
+2025-12-22 21:32:50,534 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:32:50,534 | INFO | Retrying request to /chat/completions in 0.908853 seconds
+2025-12-22 21:32:51,868 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-22 21:32:58,658 | INFO | 🤖 Executing: ./gradlew build
+2025-12-22 21:36:16,179 | INFO | ✅ Command succeeded (exit code 0)
+2025-12-22 21:36:16,180 | INFO | 🔄 Iteration 2/50
+2025-12-22 21:36:16,619 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:16,621 | INFO | Retrying request to /chat/completions in 0.476420 seconds
+2025-12-22 21:36:17,380 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:17,380 | INFO | Retrying request to /chat/completions in 0.843509 seconds
+2025-12-22 21:36:18,499 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:18,507 | WARNING | ⚠️ API error (attempt 1/3): Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-exp:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google'}}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:36:18,507 | INFO | ⏳ Retrying in 2s...
+2025-12-22 21:36:20,774 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:20,774 | INFO | Retrying request to /chat/completions in 0.401068 seconds
+2025-12-22 21:36:21,475 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:21,476 | INFO | Retrying request to /chat/completions in 0.857911 seconds
+2025-12-22 21:36:22,588 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:22,590 | WARNING | ⚠️ API error (attempt 2/3): Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-exp:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google'}}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:36:22,590 | INFO | ⏳ Retrying in 4s...
+2025-12-22 21:36:26,842 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:26,842 | INFO | Retrying request to /chat/completions in 0.453273 seconds
+2025-12-22 21:36:27,559 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:27,559 | INFO | Retrying request to /chat/completions in 0.874046 seconds
+2025-12-22 21:36:28,594 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-12-22 21:36:28,595 | WARNING | ⚠️ API error (attempt 3/3): Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-exp:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google'}}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:36:28,595 | ERROR | ❌ API failed after 3 attempts
+2025-12-22 21:36:28,595 | ERROR | ❌ Failed to get response: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-exp:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google'}}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:36:28,596 | ERROR | ❌ Task failed: Implement a basic non-functional login screen following MVI
+2025-12-22 21:36:28,596 | INFO | ⏭️ Skipping to next task...
+2025-12-22 21:36:30,607 | INFO | ✅ All tasks completed!
+2025-12-22 21:36:30,607 | WARNING | ⚠️ No tasks completed successfully. Skipping PR creation.
+
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  🌙 Night Shift Agent v3.0                                   ║
+    ║  Autonomous Coding Assistant with Fork + PR Workflow         ║
+    ╚══════════════════════════════════════════════════════════════╝
+    

@@ -1,0 +1,40 @@
+2025-12-22 21:31:03,408 | INFO | 🚀 Starting Night Shift Agent
+2025-12-22 21:31:03,408 | INFO | 📝 Log file: .agent_logs/agent_20251222_213103.log
+2025-12-22 21:31:03,408 | INFO | 🤖 Model: x-ai/grok-4.1-fast:free
+2025-12-22 21:31:03,408 | INFO | � Bot username: agentnightshift
+2025-12-22 21:31:03,408 | INFO | �🔧 Max iterations per task: 50
+2025-12-22 21:31:03,408 | INFO | 🔒 Build verification: REQUIRED
+2025-12-22 21:31:03,408 | INFO | 📖 Read file: ARCHITECTURE.md (1642 bytes)
+2025-12-22 21:31:03,408 | INFO | 📂 Listing files in: .
+2025-12-22 21:31:03,410 | INFO | 
+============================================================
+2025-12-22 21:31:03,410 | INFO | 🍴 PHASE 0: Setting Up Fork
+2025-12-22 21:31:03,410 | INFO | ============================================================
+2025-12-22 21:31:03,410 | INFO | 🍴 Setting up fork...
+2025-12-22 21:31:03,691 | INFO | 📦 Upstream repo: chrishonson/kmp-agentic-ci-template
+2025-12-22 21:31:03,713 | INFO | ✅ Fork remote already exists
+2025-12-22 21:31:03,713 | INFO | 
+============================================================
+2025-12-22 21:31:03,713 | INFO | 📋 PHASE 1: Processing Tasks
+2025-12-22 21:31:03,713 | INFO | ============================================================
+2025-12-22 21:31:03,732 | INFO | 🌿 Creating feature branch: nightshift/20251222-213103
+2025-12-22 21:31:04,043 | INFO | ✅ Created branch: nightshift/20251222-213103
+2025-12-22 21:31:04,043 | INFO | 
+============================================================
+2025-12-22 21:31:04,044 | INFO | ▶️ Processing Task 1: Implement a basic non-functional login screen following MVI
+2025-12-22 21:31:04,044 | INFO | ============================================================
+2025-12-22 21:31:04,044 | INFO | 🔄 Iteration 1/50
+2025-12-22 21:31:04,427 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 404 Not Found"
+2025-12-22 21:31:04,428 | WARNING | ⚠️ API error (attempt 1/3): Error code: 404 - {'error': {'message': 'No endpoints found for x-ai/grok-4.1-fast:free.', 'code': 404}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:31:04,428 | INFO | ⏳ Retrying in 2s...
+2025-12-22 21:31:06,478 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 404 Not Found"
+2025-12-22 21:31:06,480 | WARNING | ⚠️ API error (attempt 2/3): Error code: 404 - {'error': {'message': 'No endpoints found for x-ai/grok-4.1-fast:free.', 'code': 404}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:31:06,480 | INFO | ⏳ Retrying in 4s...
+2025-12-22 21:31:10,524 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 404 Not Found"
+2025-12-22 21:31:10,530 | WARNING | ⚠️ API error (attempt 3/3): Error code: 404 - {'error': {'message': 'No endpoints found for x-ai/grok-4.1-fast:free.', 'code': 404}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:31:10,530 | ERROR | ❌ API failed after 3 attempts
+2025-12-22 21:31:10,531 | ERROR | ❌ Failed to get response: Error code: 404 - {'error': {'message': 'No endpoints found for x-ai/grok-4.1-fast:free.', 'code': 404}, 'user_id': 'user_36Fpo36iNKdlznVlYwdLKdQXFPJ'}
+2025-12-22 21:31:10,531 | ERROR | ❌ Task failed (not marked as done): Implement a basic non-functional login screen following MVI
+2025-12-22 21:31:10,532 | INFO | ⏭️ Skipping to next task...
+2025-12-22 21:31:12,537 | INFO | ✅ All tasks completed!
+2025-12-22 21:31:12,538 | WARNING | ⚠️ No tasks completed successfully. Skipping PR creation.
