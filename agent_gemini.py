@@ -19,7 +19,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from openai import OpenAI
 
 load_dotenv()
 
@@ -27,8 +26,7 @@ load_dotenv()
 # CONFIGURATION
 # =============================================================================
 
-API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL_NAME = os.getenv("AGENT_MODEL", "google/gemini-2.5-flash")
+MODEL_NAME = os.getenv("AGENT_MODEL", "gemini-3-flash-preview")
 GH_BOT_TOKEN = os.getenv("GH_BOT_TOKEN")
 BOT_USERNAME = os.getenv("BOT_USERNAME", "agentnightshift")
 
@@ -39,20 +37,20 @@ RETRY_BASE_DELAY = 2
 CI_POLL_INTERVAL = 60
 MAX_FILES_IN_CONTEXT = 100
 REQUIRE_BUILD_VERIFICATION = True
-MAX_TOKENS = 8192
+
 BRANCH_PREFIX = "nightshift"
 
 PROTECTED_FILES = {"build.gradle.kts", "settings.gradle.kts", "gradle.properties", "libs.versions.toml", "gradle-wrapper.properties"}
 
 LOG_DIR = Path(".agent_logs")
 LOG_DIR.mkdir(exist_ok=True)
-LOG_FILE = LOG_DIR / f"agent_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+LOG_FILE = LOG_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s',
-    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()])
+logging.basicConfig(level=logging.INFO, format='%(message)s',
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)])
 logger = logging.getLogger("NightShiftAgent")
 
-client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=API_KEY)
+# Client removed - using CLI
 
 class BuildState:
     def __init__(self):
@@ -127,23 +125,35 @@ def run_shell(command: str) -> str:
     except subprocess.TimeoutExpired: return "Error: Command timed out"
     except Exception as e: return f"Error: {e}"
 
-tools = [
-    {"type": "function", "function": {"name": "read_file", "description": "Read file contents", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
-    {"type": "function", "function": {"name": "write_file", "description": "Write to file. Run ./gradlew assembleDebug detekt after.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
-    {"type": "function", "function": {"name": "list_files", "description": "List directory files", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}}}},
-    {"type": "function", "function": {"name": "run_shell", "description": "Run shell command", "parameters": {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}}}
-]
+# Tools list removed - handled by system prompt
 available_functions = {"read_file": read_file, "write_file": write_file, "list_files": list_files, "run_shell": run_shell}
 
-def call_api_with_retry(messages, tools_list):
+def call_gemini_cli(prompt: str):
+    logger.info("🤖 Calling Gemini CLI...")
     for attempt in range(MAX_RETRIES):
         try:
-            return client.chat.completions.create(model=MODEL_NAME, messages=messages, tools=tools_list, max_tokens=MAX_TOKENS)
+            # Pushing prompt via stdin
+            result = subprocess.run(
+                ["gemini", "--model", MODEL_NAME, "--output-format", "text"],
+                input=prompt,
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
+            if result.returncode != 0:
+                logger.warning(f"⚠️ CLI Error (Attempt {attempt+1}/{MAX_RETRIES}): {result.stderr}")
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_BASE_DELAY * (2 ** attempt))
+                    continue
+                return None
+            return result.stdout.strip()
         except Exception as e:
-            delay = RETRY_BASE_DELAY * (2 ** attempt)
-            logger.warning(f"⚠️ API error ({attempt + 1}/{MAX_RETRIES}): {e}")
-            if attempt < MAX_RETRIES - 1: time.sleep(delay)
-            else: raise
+            logger.warning(f"⚠️ CLI Exception (Attempt {attempt+1}/{MAX_RETRIES}): {e}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_BASE_DELAY * (2 ** attempt))
+            else:
+                return None
+    return None
 
 # =============================================================================
 # GIT HELPERS
@@ -278,60 +288,104 @@ RULES:
 2. After code changes, run './gradlew assembleDebug detekt' (NOT 'build')
 3. If build fails, fix YOUR CODE (not build files)
 4. Commit when build passes
-5. NEVER modify build.gradle.kts or settings.gradle.kts"""
+5. NEVER modify build.gradle.kts or settings.gradle.kts
 
-    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": f"TASK: {task}"}]
+TOOL USAGE FORMAT:
+To Use a tool, OUTPUT STRICT JSON ONLY:
+{{
+  "tool": "tool_name",
+  "args": {{ "arg1": "value" }}
+}}
+
+AVAILABLE TOOLS:
+- read_file(path)
+- write_file(path, content)
+- list_files(path)
+- run_shell(command)
+"""
+    full_history = system_prompt + f"\n\nTASK: {task}\n"
     
     for iteration in range(MAX_ITERATIONS):
         logger.info(f"🔄 Iteration {iteration + 1}/{MAX_ITERATIONS}")
-        try: response = call_api_with_retry(messages, tools)
-        except: return False
         
-        msg = response.choices[0].message
-        messages.append(msg)
+        response_text = call_gemini_cli(full_history)
+        if not response_text:
+            logger.error("❌ No response from Gemini CLI")
+            return False
+            
+        full_history += f"\n\nASSISTANT: {response_text}"
         
-        if msg.tool_calls:
-            for tc in msg.tool_calls:
-                func = available_functions.get(tc.function.name)
-                if not func: continue
-                try:
-                    args = json.loads(tc.function.arguments)
-                    resp = func(**args)
-                    if len(str(resp)) > 10000: resp = str(resp)[:5000] + "...[truncated]..." + str(resp)[-5000:]
-                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": str(resp)})
-                except Exception as e:
-                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": f"Error: {e}"})
-        else:
-            logger.info(f"\n🧠 Agent Report:\n{msg.content}")
-            if build_state.is_verified():
-                logger.info("✅ Build verified")
-                return True
-            messages.append({"role": "user", "content": "SYSTEM: Run './gradlew assembleDebug detekt' to verify."})
+        # Parse for JSON format tool calls
+        if "{" in response_text and "}" in response_text:
+            try:
+                # Find JSON blob
+                start = response_text.find("{")
+                end = response_text.rfind("}") + 1
+                json_str = response_text[start:end]
+                data = json.loads(json_str)
+                
+                if "tool" in data and "args" in data:
+                    tool_name = data["tool"]
+                    args = data["args"]
+                    logger.info(f"🛠️ Tool Call: {tool_name}")
+                    
+                    func = available_functions.get(tool_name)
+                    if func:
+                        resp = func(**args)
+                        if len(str(resp)) > 10000: resp = str(resp)[:5000] + "...[truncated]..." + str(resp)[-5000:]
+                        full_history += f"\n\nTOOL OUTPUT: {str(resp)}"
+                        continue
+            except:
+                pass # Not a tool call or invalid JSON
+
+        logger.info(f"\n🧠 Agent Report:\n{response_text}")
+        if build_state.is_verified():
+            logger.info("✅ Build verified")
+            return True
+        full_history += "\n\nUSER: System: Run 'run_shell(\"./gradlew assembleDebug detekt\")' to verify."
     return False
 
 def fix_ci_failure(branch_name: str, arch: str, files: str) -> bool:
     global build_state
     build_state.reset()
     logs = get_pr_check_logs(branch_name)
-    messages = [{"role": "system", "content": f"CI failed:\n{logs}\n\nFix code (not build files), run './gradlew assembleDebug detekt'."}, {"role": "user", "content": "Fix CI."}]
+    
+    current_prompt = f"""You are Night Shift Agent.
+CI Failed for branch {branch_name}.
+Logs:
+{logs}
+
+TOOL USAGE: OUTPUT JSON {{ "tool": "name", "args": {{...}} }}
+TOOLS: read_file, write_file, list_files, run_shell
+
+Fix code (not build files), then run './gradlew assembleDebug detekt'.
+"""
+    full_history = current_prompt
+
     for _ in range(MAX_ITERATIONS):
-        try: response = call_api_with_retry(messages, tools)
-        except: return False
-        msg = response.choices[0].message
-        messages.append(msg)
-        if msg.tool_calls:
-            for tc in msg.tool_calls:
-                func = available_functions.get(tc.function.name)
-                if not func: continue
-                try:
-                    args = json.loads(tc.function.arguments)
-                    resp = func(**args)
-                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": str(resp)})
-                except Exception as e:
-                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": f"Error: {e}"})
-        else:
-            if build_state.is_verified(): return True
-            messages.append({"role": "user", "content": "Run './gradlew assembleDebug detekt'."})
+        response_text = call_gemini_cli(full_history)
+        if not response_text: return False
+        
+        full_history += f"\n\nASSISTANT: {response_text}"
+        
+        if "{" in response_text and "}" in response_text:
+            try:
+                start = response_text.find("{")
+                end = response_text.rfind("}") + 1
+                data = json.loads(response_text[start:end])
+                if "tool" in data and "args" in data:
+                    tool_name = data["tool"]
+                    tool_args = data["args"]
+                    logger.info(f"🛠️ Tool Call: {tool_name}")
+                    func = available_functions.get(tool_name)
+                    if func:
+                        resp = func(**tool_args)
+                        full_history += f"\n\nTOOL OUTPUT: {str(resp)[:5000]}"
+                        continue
+            except: pass
+            
+        if build_state.is_verified(): return True
+        full_history += "\n\nUSER: Run './gradlew assembleDebug detekt'."
     return False
 
 # =============================================================================
@@ -339,16 +393,15 @@ def fix_ci_failure(branch_name: str, arch: str, files: str) -> bool:
 # =============================================================================
 
 def main():
-    print("""
+    logger.info("""
     ╔══════════════════════════════════════════════════════════════╗
     ║  🌙 Night Shift Agent v3.1                                   ║
     ║  Autonomous Coding Assistant with Direct Push Workflow       ║
     ╚══════════════════════════════════════════════════════════════╝
     """)
     
-    if not API_KEY:
-        logger.error("❌ OPENROUTER_API_KEY not set")
-        sys.exit(1)
+    if not GH_BOT_TOKEN:
+        logger.warning("⚠️ GH_BOT_TOKEN not set - git operations may fail")
     
     logger.info(f"🤖 Model: {MODEL_NAME}")
     logger.info(f"📝 Log file: {LOG_FILE}")
