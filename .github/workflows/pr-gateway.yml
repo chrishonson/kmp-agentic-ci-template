@@ -50,7 +50,6 @@ jobs:
           retention-days: 7
 
   ui_verification:
-    name: UI Verification
     needs: quality_gate
     # Security: Only run on PRs from the same repo (not forks) to protect self-hosted runner
     if: github.event.pull_request.head.repo.full_name == github.repository
