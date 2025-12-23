@@ -1,249 +1,488 @@
+#!/usr/bin/env python3
+"""
+🌙 Night Shift Agent v3.1 - Autonomous Coding Assistant
+========================================================
+Features:
+- Direct push to origin (enables UI tests on PRs)
+- Build verification before task completion
+- CI monitoring with automatic fixes
+- Protected files list to prevent corruption
+- Self-preservation (won't be wiped by git reset)
+"""
+
 import os
 import subprocess
 import sys
 import time
-import glob
 import json
+import logging
+from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
 
-# Configuration
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
 API_KEY = os.getenv("OPENROUTER_API_KEY")
-# Using Google Gemini 2.0 Flash Experimental via OpenRouter (Free)
-MODEL_NAME = "x-ai/grok-4.1-fast:free" 
-# Alternative: "anthropic/claude-3.5-sonnet" (Paid)
+MODEL_NAME = os.getenv("AGENT_MODEL", "google/gemini-2.5-flash")
+GH_BOT_TOKEN = os.getenv("GH_BOT_TOKEN")
+BOT_USERNAME = os.getenv("BOT_USERNAME", "agentnightshift")
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=API_KEY,
-)
+MAX_ITERATIONS = 50
+MAX_RETRIES = 3
+MAX_CI_FIX_ATTEMPTS = 5
+RETRY_BASE_DELAY = 2
+CI_POLL_INTERVAL = 60
+MAX_FILES_IN_CONTEXT = 100
+REQUIRE_BUILD_VERIFICATION = True
+MAX_TOKENS = 8192
+BRANCH_PREFIX = "nightshift"
 
-# --- TOOLS ---
+PROTECTED_FILES = {"build.gradle.kts", "settings.gradle.kts", "gradle.properties", "libs.versions.toml", "gradle-wrapper.properties"}
 
-def read_file(path):
-    """Reads a file from the filesystem."""
+LOG_DIR = Path(".agent_logs")
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f"agent_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s',
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()])
+logger = logging.getLogger("NightShiftAgent")
+
+client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=API_KEY)
+
+class BuildState:
+    def __init__(self):
+        self.build_attempted = False
+        self.build_passed = False
+        self.last_error = None
+    def reset(self): self.__init__()
+    def is_verified(self) -> bool:
+        return self.build_attempted and self.build_passed if REQUIRE_BUILD_VERIFICATION else True
+
+build_state = BuildState()
+
+# =============================================================================
+# TOOLS
+# =============================================================================
+
+def read_file(path: str) -> str:
     try:
-        with open(path, "r") as f:
-            content = f.read()
-        print(f"📖 Reading: {path}")
+        with open(path, "r") as f: content = f.read()
+        logger.info(f"📖 Read file: {path} ({len(content)} bytes)")
         return content
     except Exception as e:
+        logger.error(f"❌ Failed to read {path}: {e}")
         return f"Error reading file {path}: {e}"
 
-def write_file(path, content):
-    """Writes content to a file."""
+def write_file(path: str, content: str) -> str:
+    filename = os.path.basename(path)
+    if filename in PROTECTED_FILES:
+        logger.warning(f"🛡️ BLOCKED: {path}")
+        return f"ERROR: {filename} is protected. Fix source code instead."
     try:
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w") as f:
-            f.write(content)
-        print(f"✍️ Writing to: {path}")
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w") as f: f.write(content)
+        logger.info(f"✍️ Wrote file: {path} ({len(content)} bytes)")
+        build_state.build_passed = False
+        build_state.build_attempted = False
         return f"Successfully wrote to {path}"
     except Exception as e:
+        logger.error(f"❌ Failed to write {path}: {e}")
         return f"Error writing to file {path}: {e}"
 
-def list_files(path="."):
-    """Lists all files in the project (recursive, ignoring .git and .venv)."""
+def list_files(path: str = ".") -> str:
     files = []
-    print(f"📂 Listing: {path}")
+    ignore = {".git", ".gradle", ".idea", ".venv", "__pycache__", "build", ".kotlin", "node_modules"}
+    logger.info(f"📂 Listing files in: {path}")
     for root, dirs, filenames in os.walk(path):
-        # Ignore hidden directories
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__" and d != "build"]
-        
-        for filename in filenames:
-            if filename.startswith("."): continue
-            files.append(os.path.join(root, filename))
+        dirs[:] = [d for d in dirs if d not in ignore and not d.startswith(".")]
+        for f in filenames:
+            if not f.startswith(".") and not any(f.endswith(e) for e in [".jar", ".class", ".pyc"]):
+                files.append(os.path.join(root, f))
+                if len(files) >= MAX_FILES_IN_CONTEXT: return "\n".join(files + ["...(truncated)"])
     return "\n".join(files)
 
-def run_shell(command):
-    """Executes a shell command."""
-    print(f"🤖 Executing: {command}")
+def run_shell(command: str) -> str:
+    global build_state
+    logger.info(f"🤖 Executing: {command}")
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        env = os.environ.copy()
+        if GH_BOT_TOKEN and command.strip().startswith("gh "):
+            env["GITHUB_TOKEN"] = GH_BOT_TOKEN
+            env["GH_TOKEN"] = GH_BOT_TOKEN
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=600, env=env)
         output = result.stdout + result.stderr
+        if any(kw in command.lower() for kw in ["gradlew", "gradle", "build", "compile", "assemble"]):
+            build_state.build_attempted = True
+            build_state.build_passed = result.returncode == 0
+            if result.returncode == 0: logger.info("✅ Command succeeded")
+            else: logger.warning(f"⚠️ Command failed (exit {result.returncode})")
         if result.returncode != 0:
-             return f"Command failed with exit code {result.returncode}:\n{output}"
+            return f"Command failed (exit {result.returncode}):\n{output}"
         return output
-    except Exception as e:
-        return f"Error executing command: {e}"
+    except subprocess.TimeoutExpired: return "Error: Command timed out"
+    except Exception as e: return f"Error: {e}"
 
 tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "Read the contents of a file",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "The path to the file to read"}
-                },
-                "required": ["path"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": "Write content to a file",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "The path to the file to write"},
-                    "content": {"type": "string", "description": "The content to write"}
-                },
-                "required": ["path", "content"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "list_files",
-            "description": "List all files in the project",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "The directory to list (default .)"}
-                }
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "run_shell",
-            "description": "Run a shell command",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "command": {"type": "string", "description": "The command to run"}
-                },
-                "required": ["command"]
-            }
-        }
-    }
+    {"type": "function", "function": {"name": "read_file", "description": "Read file contents", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
+    {"type": "function", "function": {"name": "write_file", "description": "Write to file. Run ./gradlew assembleDebug detekt after.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
+    {"type": "function", "function": {"name": "list_files", "description": "List directory files", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}}}},
+    {"type": "function", "function": {"name": "run_shell", "description": "Run shell command", "parameters": {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}}}
 ]
+available_functions = {"read_file": read_file, "write_file": write_file, "list_files": list_files, "run_shell": run_shell}
 
-available_functions = {
-    "read_file": read_file,
-    "write_file": write_file,
-    "list_files": list_files,
-    "run_shell": run_shell,
-}
+def call_api_with_retry(messages, tools_list):
+    for attempt in range(MAX_RETRIES):
+        try:
+            return client.chat.completions.create(model=MODEL_NAME, messages=messages, tools=tools_list, max_tokens=MAX_TOKENS)
+        except Exception as e:
+            delay = RETRY_BASE_DELAY * (2 ** attempt)
+            logger.warning(f"⚠️ API error ({attempt + 1}/{MAX_RETRIES}): {e}")
+            if attempt < MAX_RETRIES - 1: time.sleep(delay)
+            else: raise
+
+# =============================================================================
+# GIT HELPERS
+# =============================================================================
+
+def run_cmd(command: str, timeout: int = 120) -> tuple[bool, str]:
+    try:
+        env = os.environ.copy()
+        if GH_BOT_TOKEN and command.strip().startswith("gh "):
+            env["GITHUB_TOKEN"] = GH_BOT_TOKEN
+            env["GH_TOKEN"] = GH_BOT_TOKEN
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout, env=env)
+        return result.returncode == 0, (result.stdout + result.stderr).strip()
+    except Exception as e: return False, str(e)
+
+def get_repo_info() -> dict:
+    success, output = run_cmd("gh repo view --json nameWithOwner,url")
+    try: return json.loads(output) if success else {}
+    except: return {}
+
+def setup_origin_with_bot_token() -> bool:
+    logger.info("🔧 Configuring git authentication...")
+    repo_info = get_repo_info()
+    repo_name = repo_info.get("nameWithOwner", "")
+    if not repo_name:
+        logger.error("❌ Could not determine repository")
+        return False
+    logger.info(f"📦 Repository: {repo_name}")
+    if GH_BOT_TOKEN:
+        run_cmd(f'git config user.name "{BOT_USERNAME}"')
+        run_cmd(f'git config user.email "{BOT_USERNAME}@users.noreply.github.com"')
+        origin_url = f"https://{BOT_USERNAME}:{GH_BOT_TOKEN}@github.com/{repo_name}.git"
+        run_cmd(f'git remote set-url origin "{origin_url}"')
+        logger.info("✅ Git configured with bot credentials")
+    return True
+
+def create_feature_branch() -> str:
+    branch_name = f"{BRANCH_PREFIX}/{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    logger.info(f"🌿 Creating feature branch: {branch_name}")
+    
+    # Preserve agent script before reset
+    agent_script = None
+    if os.path.exists("agent_gemini.py"):
+        with open("agent_gemini.py", "r") as f:
+            agent_script = f.read()
+    
+    run_cmd("git checkout main")
+    run_cmd("git fetch origin")
+    run_cmd("git reset --hard origin/main")
+    
+    # Restore agent script after reset
+    if agent_script:
+        with open("agent_gemini.py", "w") as f:
+            f.write(agent_script)
+    
+    run_cmd(f"git checkout -b {branch_name}")
+    logger.info(f"✅ Created branch: {branch_name}")
+    return branch_name
+
+def push_branch(branch_name: str) -> bool:
+    logger.info(f"📤 Pushing branch to origin: {branch_name}")
+    success, output = run_cmd(f"git push -u origin {branch_name} --force")
+    if success: logger.info("✅ Pushed successfully")
+    else: logger.error(f"❌ Push failed: {output}")
+    return success
+
+def create_pull_request(branch_name: str, title: str, body: str) -> tuple[bool, str]:
+    logger.info("📝 Creating Pull Request...")
+    repo_info = get_repo_info()
+    repo_name = repo_info.get("nameWithOwner", "")
+    if not repo_name: return False, "No repo"
+    safe_title = title.replace('"', '\\"')
+    safe_body = body.replace('"', '\\"')
+    cmd = f'gh pr create --repo {repo_name} --head "{branch_name}" --title "{safe_title}" --body "{safe_body}"'
+    success, output = run_cmd(cmd, timeout=60)
+    if success:
+        pr_url = output.strip().split('\n')[-1]
+        logger.info(f"✅ Created PR: {pr_url}")
+        return True, pr_url
+    logger.error(f"❌ Failed: {output}")
+    return False, output
+
+def get_pr_number_from_branch(branch_name: str) -> str:
+    repo_info = get_repo_info()
+    repo_name = repo_info.get("nameWithOwner", "")
+    success, output = run_cmd(f'gh pr list --repo {repo_name} --head "{branch_name}" --json number --jq ".[0].number"')
+    return output.strip() if success else ""
+
+def get_pr_status(branch_name: str) -> dict:
+    pr_number = get_pr_number_from_branch(branch_name)
+    if not pr_number: return {"success": False}
+    repo_info = get_repo_info()
+    success, output = run_cmd(f'gh pr checks {pr_number} --repo {repo_info.get("nameWithOwner", "")} --json name,state,conclusion')
+    if success:
+        try:
+            checks = json.loads(output)
+            return {"success": True, "all_passed": all(c.get("conclusion") == "success" for c in checks if c.get("state") == "completed"),
+                    "any_failed": any(c.get("conclusion") == "failure" for c in checks),
+                    "pending": any(c.get("state") in ["pending", "queued", "in_progress"] for c in checks)}
+        except: pass
+    return {"success": False}
+
+def get_pr_check_logs(branch_name: str) -> str:
+    pr_number = get_pr_number_from_branch(branch_name)
+    if not pr_number: return "No PR"
+    repo_info = get_repo_info()
+    success, output = run_cmd(f'gh pr checks {pr_number} --repo {repo_info.get("nameWithOwner", "")} --json name,conclusion,detailsUrl')
+    if not success: return output
+    try:
+        checks = json.loads(output)
+        failed = [c for c in checks if c.get("conclusion") == "failure"]
+        return "\n".join([f"- {c.get('name')}: {c.get('detailsUrl')}" for c in failed]) if failed else "No failures"
+    except: return output
+
+# =============================================================================
+# TASK PROCESSING
+# =============================================================================
+
+def process_task(task: str, arch: str, files: str) -> bool:
+    global build_state
+    build_state.reset()
+    system_prompt = f"""You are Night Shift Agent for a Kotlin Multiplatform project.
+
+ARCHITECTURE:
+{arch}
+
+FILES:
+{files}
+
+RULES:
+1. Create/modify Kotlin source files only
+2. After code changes, run './gradlew assembleDebug detekt' (NOT 'build')
+3. If build fails, fix YOUR CODE (not build files)
+4. Commit when build passes
+5. NEVER modify build.gradle.kts or settings.gradle.kts"""
+
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": f"TASK: {task}"}]
+    
+    for iteration in range(MAX_ITERATIONS):
+        logger.info(f"🔄 Iteration {iteration + 1}/{MAX_ITERATIONS}")
+        try: response = call_api_with_retry(messages, tools)
+        except: return False
+        
+        msg = response.choices[0].message
+        messages.append(msg)
+        
+        if msg.tool_calls:
+            for tc in msg.tool_calls:
+                func = available_functions.get(tc.function.name)
+                if not func: continue
+                try:
+                    args = json.loads(tc.function.arguments)
+                    resp = func(**args)
+                    if len(str(resp)) > 10000: resp = str(resp)[:5000] + "...[truncated]..." + str(resp)[-5000:]
+                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": str(resp)})
+                except Exception as e:
+                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": f"Error: {e}"})
+        else:
+            logger.info(f"\n🧠 Agent Report:\n{msg.content}")
+            if build_state.is_verified():
+                logger.info("✅ Build verified")
+                return True
+            messages.append({"role": "user", "content": "SYSTEM: Run './gradlew assembleDebug detekt' to verify."})
+    return False
+
+def fix_ci_failure(branch_name: str, arch: str, files: str) -> bool:
+    global build_state
+    build_state.reset()
+    logs = get_pr_check_logs(branch_name)
+    messages = [{"role": "system", "content": f"CI failed:\n{logs}\n\nFix code (not build files), run './gradlew assembleDebug detekt'."}, {"role": "user", "content": "Fix CI."}]
+    for _ in range(MAX_ITERATIONS):
+        try: response = call_api_with_retry(messages, tools)
+        except: return False
+        msg = response.choices[0].message
+        messages.append(msg)
+        if msg.tool_calls:
+            for tc in msg.tool_calls:
+                func = available_functions.get(tc.function.name)
+                if not func: continue
+                try:
+                    args = json.loads(tc.function.arguments)
+                    resp = func(**args)
+                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": str(resp)})
+                except Exception as e:
+                    messages.append({"tool_call_id": tc.id, "role": "tool", "name": tc.function.name, "content": f"Error: {e}"})
+        else:
+            if build_state.is_verified(): return True
+            messages.append({"role": "user", "content": "Run './gradlew assembleDebug detekt'."})
+    return False
+
+# =============================================================================
+# MAIN
+# =============================================================================
 
 def main():
-    print("🌙 Night Shift Agent Initializing (OpenRouter)...")
-    print(f"✨ Connected to {MODEL_NAME}")
-
-    # Check Task Queue
-    if os.path.exists("tasks.txt"):
-        while True:
-            with open("tasks.txt", "r") as f:
-                lines = f.readlines()
-            
-            # Find first unchecked task
-            task_index = -1
-            current_task = ""
-            for i, line in enumerate(lines):
-                if line.strip() and not line.strip().startswith("[x]"):
-                    task_index = i
-                    current_task = line.strip()
-                    break
-            
-            if task_index != -1:
-                print(f"\n▶️ Processing Task: {current_task}")
-                
-                # Load Context
-                architecture_guide = ""
-                if os.path.exists("ARCHITECTURE.md"):
-                    architecture_guide = read_file("ARCHITECTURE.md")
-                
-                project_files = list_files()
-
-                system_prompt = f"""You are the Night Shift Agent, an autonomous coding assistant.
-                
-                SYSTEM INSTRUCTIONS:
-                {architecture_guide}
-                
-                PROJECT FILES:
-                {project_files}
-                
-                INSTRUCTIONS:
-                1. Analyze the task.
-                2. Read necessary files to understand the code.
-                3. Modify or create files using 'write_file'.
-                4. Verify your work using 'run_shell' (e.g., run tests).
-                5. CRITICAL: If the build or tests fail (exit code != 0), you MUST fix the code and retry. Do NOT mark the task as done until the build passes.
-                6. Commit your changes using 'run_shell' (e.g., git commit).
-                
-                IMPORTANT:
-                - Always use the provided tools.
-                - Be concise in your reasoning.
-                - NEVER finish if the code does not compile.
-                """
-                
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"TASK: {current_task}"}
-                ]
-                
-                try:
-                    # Tool Loop
-                    while True:
-                        response = client.chat.completions.create(
-                            model=MODEL_NAME,
-                            messages=messages,
-                            tools=tools,
-                        )
-                        
-                        response_message = response.choices[0].message
-                        messages.append(response_message)
-                        
-                        tool_calls = response_message.tool_calls
-                        
-                        if tool_calls:
-                            for tool_call in tool_calls:
-                                function_name = tool_call.function.name
-                                function_to_call = available_functions[function_name]
-                                function_args = json.loads(tool_call.function.arguments)
-                                
-                                # Execute tool
-                                function_response = function_to_call(**function_args)
-                                
-                                messages.append(
-                                    {
-                                        "tool_call_id": tool_call.id,
-                                        "role": "tool",
-                                        "name": function_name,
-                                        "content": str(function_response),
-                                    }
-                                )
-                        else:
-                            # No more tools, final response
-                            print(f"\n🧠 Agent Report:\n{response_message.content}")
-                            break
-
-                    # Mark task as done if successful (assuming no exception)
-                    lines[task_index] = f"[x] {lines[task_index]}"
-                    with open("tasks.txt", "w") as f:
-                        f.writelines(lines)
-                    print(f"✅ Marked task as done: {current_task}")
-                    
-                    # Optional: Small delay to be polite to the API
-                    time.sleep(2)
-                    
-                except Exception as e:
-                    print(f"❌ Error: {e}")
-                    break # Stop on error
-            else:
-                print("Task queue is empty (all tasks completed).")
+    print("""
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  🌙 Night Shift Agent v3.1                                   ║
+    ║  Autonomous Coding Assistant with Direct Push Workflow       ║
+    ╚══════════════════════════════════════════════════════════════╝
+    """)
+    
+    if not API_KEY:
+        logger.error("❌ OPENROUTER_API_KEY not set")
+        sys.exit(1)
+    
+    logger.info(f"🤖 Model: {MODEL_NAME}")
+    logger.info(f"📝 Log file: {LOG_FILE}")
+    
+    arch = read_file("ARCHITECTURE.md") if os.path.exists("ARCHITECTURE.md") else ""
+    files = list_files()
+    
+    if not os.path.exists("tasks.txt"):
+        logger.warning("⚠️ No tasks.txt found")
+        return
+    
+    if not setup_origin_with_bot_token():
+        logger.error("❌ Failed to configure git")
+        sys.exit(1)
+    
+    feature_branch = create_feature_branch()
+    
+    while True:
+        with open("tasks.txt", "r") as f: lines = f.readlines()
+        task_index = -1
+        current_task = ""
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped and not any(stripped.startswith(p) for p in ["[x]", "[!]", "#"]):
+                task_index = i
+                current_task = stripped
                 break
+        if task_index == -1:
+            logger.info("✅ All tasks completed!")
+            break
+        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"▶️ Processing Task {task_index + 1}: {current_task}")
+        logger.info(f"{'='*60}")
+        
+        if process_task(current_task, arch, files):
+            lines[task_index] = f"[x] {lines[task_index].lstrip()}"
+            logger.info(f"✅ Done: {current_task}")
+        else:
+            lines[task_index] = f"[!] {lines[task_index].lstrip()}"
+            logger.error(f"❌ Failed: {current_task}")
+        
+        with open("tasks.txt", "w") as f: f.writelines(lines)
+        time.sleep(2)
+    
+    with open("tasks.txt", "r") as f: final_lines = f.readlines()
+    tasks_succeeded = sum(1 for l in final_lines if l.startswith("[x]"))
+    completed = [l.replace("[x]", "").strip() for l in final_lines if l.startswith("[x]")]
+    
+    if tasks_succeeded == 0:
+        logger.warning("⚠️ No tasks completed. Skipping PR.")
+        run_cmd("git checkout main")
+        return
+    
+    logger.info("\n" + "="*60)
+    logger.info("📤 Creating Pull Request")
+    logger.info("="*60)
+    
+    # Commit all changes
+    logger.info("📝 Committing changes...")
+    run_cmd("git add -A")
+    commit_msg = f"🌙 Night Shift: {', '.join(completed[:3])}{'...' if len(completed) > 3 else ''}"
+    success, output = run_cmd(f'git commit -m "{commit_msg}"')
+    if not success and "nothing to commit" in output:
+        logger.warning("⚠️ No changes to commit")
+    elif not success:
+        logger.error(f"❌ Failed to commit: {output}")
+        return
     else:
-        print("No tasks.txt found.")
+        logger.info("✅ Changes committed")
+    
+    if not push_branch(feature_branch):
+        logger.error("❌ Failed to push")
+        return
+    
+    pr_title = f"🌙 Night Shift: {tasks_succeeded} task(s)"
+    pr_body = f"## 🌙 Night Shift Agent Report\n\n**Tasks**: {tasks_succeeded}\n\n" + "\n".join([f"- [x] {t}" for t in completed])
+    
+    pr_success, pr_url = create_pull_request(feature_branch, pr_title, pr_body)
+    if not pr_success:
+        logger.error(f"❌ Failed to create PR: {pr_url}")
+        return
+    
+    logger.info(f"✅ PR Created: {pr_url}")
+    
+    logger.info("\n" + "="*60)
+    logger.info("🔍 Monitoring CI Status (will wait up to 30 minutes)")
+    logger.info("="*60)
+    
+    MAX_CI_WAIT_POLLS = 30
+    ci_passed = False
+    
+    for poll in range(MAX_CI_WAIT_POLLS):
+        logger.info(f"⏳ Poll {poll + 1}/{MAX_CI_WAIT_POLLS}: Waiting {CI_POLL_INTERVAL}s for CI...")
+        time.sleep(CI_POLL_INTERVAL)
+        
+        status = get_pr_status(feature_branch)
+        if not status.get("success"):
+            logger.info("⏳ Could not get status, retrying...")
+            continue
+        
+        if status.get("pending"):
+            logger.info("⏳ CI still running...")
+            continue
+        
+        if status.get("all_passed"):
+            logger.info("🎉 ALL CI CHECKS PASSED!")
+            ci_passed = True
+            break
+        
+        if status.get("any_failed"):
+            logger.warning(f"❌ CI failed! Attempting fix...")
+            if fix_ci_failure(feature_branch, arch, files):
+                push_branch(feature_branch)
+                logger.info("📤 Pushed CI fix, waiting for new run...")
+            else:
+                logger.error("❌ Could not fix CI failure")
+    
+    # Final Summary
+    logger.info("\n" + "="*60)
+    logger.info("📊 FINAL SESSION SUMMARY")
+    logger.info("="*60)
+    logger.info(f"   Tasks processed: {tasks_succeeded}")
+    logger.info(f"   PR URL: {pr_url}")
+    
+    if ci_passed:
+        logger.info("   CI Status: ✅ ALL CHECKS PASSED - PR IS READY TO MERGE!")
+    else:
+        logger.warning("   CI Status: ⚠️ CI did not complete successfully")
+        logger.warning("   Manual review may be required")
+    
+    logger.info("="*60)
+    
+    run_cmd("git checkout main")
 
 if __name__ == "__main__":
     main()
