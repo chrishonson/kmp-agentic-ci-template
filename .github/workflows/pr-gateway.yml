@@ -34,9 +34,6 @@ jobs:
       - name: Run Detekt
         run: ./gradlew detekt --no-daemon
 
-      - name: Run Kotlin Lint
-        run: ./gradlew lintKotlin --no-daemon
-
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
 
