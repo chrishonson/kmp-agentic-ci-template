@@ -239,8 +239,16 @@ def create_pull_request(branch_name: str, title: str, body: str) -> tuple[bool, 
 def get_pr_number_from_branch(branch_name: str) -> str:
     repo_info = get_repo_info()
     repo_name = repo_info.get("nameWithOwner", "")
-    success, output = run_cmd(f'gh pr list --repo {repo_name} --head "{branch_name}" --json number --jq ".[0].number"')
+    success, output = run_cmd(f'gh pr list --state all --repo {repo_name} --head "{branch_name}" --json number --jq ".[0].number"')
     return output.strip() if success else ""
+
+def is_pr_merged(branch_name: str) -> bool:
+    pr_number = get_pr_number_from_branch(branch_name)
+    if not pr_number: return False
+    repo_info = get_repo_info()
+    repo_name = repo_info.get("nameWithOwner", "")
+    success, output = run_cmd(f'gh pr view {pr_number} --repo {repo_name} --json state --jq .state')
+    return output.strip() == "MERGED" if success else False
 
 def get_pr_status(branch_name: str) -> dict:
     pr_number = get_pr_number_from_branch(branch_name)
@@ -505,6 +513,13 @@ def main():
         
         if status.get("pending"):
             logger.info("⏳ CI still running...")
+            
+            # Check if merged while running
+            if is_pr_merged(feature_branch):
+                logger.info("🎉 PR Merged! Stopping monitor.")
+                ci_passed = True
+                break
+                
             continue
         
         if status.get("all_passed"):
