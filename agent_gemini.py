@@ -257,13 +257,15 @@ def get_pr_status(branch_name: str) -> dict:
     pr_number = get_pr_number_from_branch(branch_name)
     if not pr_number: return {"success": False}
     repo_info = get_repo_info()
-    success, output = run_cmd(f'gh pr checks {pr_number} --repo {repo_info.get("nameWithOwner", "")} --json name,state,conclusion')
+    success, output = run_cmd(f'gh pr checks {pr_number} --repo {repo_info.get("nameWithOwner", "")} --json name,state')
     if success:
         try:
             checks = json.loads(output)
-            return {"success": True, "all_passed": all(c.get("conclusion") == "success" for c in checks if c.get("state") == "completed"),
-                    "any_failed": any(c.get("conclusion") == "failure" for c in checks),
-                    "pending": any(c.get("state") in ["pending", "queued", "in_progress"] for c in checks)}
+            # state values: SUCCESS, FAILURE, PENDING, QUEUED, IN_PROGRESS, SKIPPED, etc.
+            return {"success": True, 
+                    "all_passed": all(c.get("state") == "SUCCESS" for c in checks),
+                    "any_failed": any(c.get("state") == "FAILURE" for c in checks),
+                    "pending": any(c.get("state") in ["PENDING", "QUEUED", "IN_PROGRESS"] for c in checks)}
         except: pass
     return {"success": False}
 
@@ -271,12 +273,12 @@ def get_pr_check_logs(branch_name: str) -> str:
     pr_number = get_pr_number_from_branch(branch_name)
     if not pr_number: return "No PR"
     repo_info = get_repo_info()
-    success, output = run_cmd(f'gh pr checks {pr_number} --repo {repo_info.get("nameWithOwner", "")} --json name,conclusion,detailsUrl')
+    success, output = run_cmd(f'gh pr checks {pr_number} --repo {repo_info.get("nameWithOwner", "")} --json name,state,link')
     if not success: return output
     try:
         checks = json.loads(output)
-        failed = [c for c in checks if c.get("conclusion") == "failure"]
-        return "\n".join([f"- {c.get('name')}: {c.get('detailsUrl')}" for c in failed]) if failed else "No failures"
+        failed = [c for c in checks if c.get("state") == "FAILURE"]
+        return "\n".join([f"- {c.get('name')}: {c.get('link')}" for c in failed]) if failed else "No failures"
     except: return output
 
 # =============================================================================
