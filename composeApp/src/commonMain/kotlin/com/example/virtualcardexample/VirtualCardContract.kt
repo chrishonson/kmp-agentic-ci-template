@@ -1,25 +1,29 @@
 package com.example.virtualcardexample
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class VirtualCardState(
-    val cardNumber: String = "**** **** **** 3456",
-    val cardHolder: String = "Nick Antigravity",
+    val cardNumber: String = "**** **** **** ****",
+    val cardHolder: String = "---- ----",
     val expiry: String = "**/**",
     val cvv: String = "***",
     val isRevealed: Boolean = false,
     val isLocked: Boolean = false,
-    val buttonText: String = "Reveal Details",
     val isLoading: Boolean = false,
-    val loadingMessage: String? = null
+    val loadingMessage: String? = null,
+    val buttonText: String = "Reveal Details",
+    val networkResponse: String? = null
 )
 
 sealed interface VirtualCardIntent {
     data object ToggleVisibility : VirtualCardIntent
-    data object ToggleLock : VirtualCardIntent
     data object LoadCardDetails : VirtualCardIntent
+    data object ToggleLock : VirtualCardIntent
     data object ReplaceCard : VirtualCardIntent
+    data object TestNetworkCall : VirtualCardIntent
 }
 
-// Data class to represent the fetched card details
 data class CardDetails(
     val cardNumber: String,
     val cardHolder: String,

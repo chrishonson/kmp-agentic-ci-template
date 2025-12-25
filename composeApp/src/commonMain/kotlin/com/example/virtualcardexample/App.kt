@@ -64,7 +64,8 @@ fun VirtualCardScreen() {
             expiry = state.expiry,
             cvv = state.cvv,
             isLoading = state.isLoading,
-            isLocked = state.isLocked
+            isLocked = state.isLocked,
+            loadingMessage = state.loadingMessage
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -96,6 +97,32 @@ fun VirtualCardScreen() {
         ) {
             Text("Replace Card")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { store.dispatch(VirtualCardIntent.TestNetworkCall) },
+            modifier = Modifier.testTag("TestNetworkButton"),
+            enabled = !state.isLoading
+        ) {
+            Text("Test Network Call")
+        }
+
+        state.networkResponse?.let {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Network Response: $it",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
+        if (state.isLoading && state.loadingMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator()
+            Text(text = state.loadingMessage ?: "", style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 
@@ -106,7 +133,8 @@ fun VirtualCard(
     expiry: String,
     cvv: String,
     isLoading: Boolean,
-    isLocked: Boolean
+    isLocked: Boolean,
+    loadingMessage: String?
 ) {
     Card(
         modifier = Modifier
@@ -133,7 +161,7 @@ fun VirtualCard(
                     )
             )
 
-            if (isLoading) {
+            if (isLoading && loadingMessage == null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center

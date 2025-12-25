@@ -12,7 +12,8 @@ private const val MASKED_CARD_SUFFIX_LENGTH = 4
 
 class VirtualCardStore(
     private val cardDetailsService: CardDetailsService = CardDetailsService(),
-    private val analyticsService: AnalyticsService = MockAnalyticsService()
+    private val analyticsService: AnalyticsService = MockAnalyticsService(),
+    private val httpService: HttpService = getHttpService()
 ) : ViewModel() {
 
     private val analyticsMiddleware: AnalyticsMiddleware = AnalyticsMiddleware(analyticsService)
@@ -39,6 +40,15 @@ class VirtualCardStore(
             VirtualCardIntent.ReplaceCard -> {
                 replaceCard()
             }
+            VirtualCardIntent.TestNetworkCall -> testNetworkCall()
+        }
+    }
+
+    private fun testNetworkCall() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, loadingMessage = "FETCHING DATA...") }
+            val response = httpService.get("https://api.github.com/zen")
+            _state.update { it.copy(isLoading = false, loadingMessage = null, networkResponse = response) }
         }
     }
 

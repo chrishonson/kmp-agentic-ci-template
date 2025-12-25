@@ -22,6 +22,9 @@ class AnalyticsMiddleware(private val analyticsService: AnalyticsService) {
             VirtualCardIntent.ReplaceCard -> {
                 analyticsService.logEvent("virtual_card_replaced")
             }
+            VirtualCardIntent.TestNetworkCall -> {
+                analyticsService.logEvent("virtual_card_test_network_call_triggered")
+            }
         }
     }
 }
