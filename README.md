@@ -1,170 +1,104 @@
-# 🌙 Night Shift Agent
+# KMP Agentic CI Template
 
-> **An AI-powered autonomous coding assistant built for the unique constraints of mobile development.**
+A **Kotlin Multiplatform** mobile app template designed for use with autonomous AI coding agents.
 
-Most AI coding agents run in the cloud or sandboxed environments. **Night Shift Agent runs locally on your machine**—because mobile development demands it.
-
-Mobile apps require platform SDKs (Android SDK, Xcode), emulators, proprietary build systems (Gradle, CocoaPods), and hardware-specific testing that simply can't run in a generic cloud container. This agent is designed to work *with* your local development environment, not around it.
+This project serves as a real-world test bed with:
+- ✅ Strict MVI Architecture
+- ✅ Build verification (Gradle + Detekt)
+- ✅ Unit tests
+- ✅ UI tests (Android instrumented)
+- ✅ CI pipeline (GitHub Actions)
+- ✅ Branch protection
 
 ---
 
-## ⚡ Quick Start
+## 🤖 Use with Night Shift Agent
+
+This template is designed to work with [Night Shift Agent](https://github.com/chrishonson/night-shift-agent)—an autonomous coding assistant.
 
 ```bash
-# 1. Create your task list
-echo "Add a dark mode toggle to the settings screen" > tasks.txt
+# Clone both repos
+git clone https://github.com/chrishonson/night-shift-agent.git
+git clone https://github.com/chrishonson/kmp-agentic-ci-template.git
 
-# 2. Activate the Python environment
+# Setup agent
+cd night-shift-agent
+python -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 
-# 3. Run the agent
-python agent_gemini.py
+# Create tasks in mobile project
+echo "Add a logout button to the home screen" > ../kmp-agentic-ci-template/tasks.txt
+
+# Run agent against mobile project
+python agent_gemini.py --project-dir ../kmp-agentic-ci-template
 ```
-
-The agent will:
-1. Check for existing open PRs (and reuse the branch if one exists)
-2. Create a feature branch (or continue on existing one)
-3. Write the code to complete your task
-4. Verify the build passes
-5. Open a Pull Request (or update the existing one)
-6. Monitor CI and attempt fixes if needed
-
-📖 **Full documentation**: [docs/AGENT_README.md](./docs/AGENT_README.md)
 
 ---
 
-## 🤖 How the Agent Works
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     🌙 Night Shift Agent                        │
-│                                                                 │
-│   tasks.txt ──▶ Gemini AI ──▶ Code Changes ──▶ PR + CI Monitor  │
-│                     │                                           │
-│              ┌──────┴──────┐                                    │
-│              │   4 Tools   │                                    │
-│              ├─────────────┤                                    │
-│              │ read_file   │                                    │
-│              │ write_file  │                                    │
-│              │ list_files  │                                    │
-│              │ run_shell   │                                    │
-│              └─────────────┘                                    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-The agent operates in a loop:
-1. **Check** for existing open PRs from previous runs
-2. **Read** the next task from `tasks.txt`
-3. **Understand** the codebase using `list_files` and `read_file`
-4. **Write** code changes with `write_file`
-5. **Verify** the build with `./gradlew assembleDebug detekt`
-6. **Commit** when verification passes
-7. **Repeat** until all tasks are complete
-8. **Push** and create/update Pull Request
-9. **Monitor** CI, auto-fixing failures when possible
-
-### PR Continuity
-
-If you stop the agent and restart it later, it will:
-- **Find your existing open PR** from a `nightshift/` branch
-- **Check out that branch** instead of creating a new one
-- **Continue working** on the same PR
-- **Read any feedback comments** you left on the PR
-
-This means you can reject changes, leave comments, and restart—the agent will try again on the same PR.
-
----
-
-## 📁 Repository Structure
+## 📁 Project Structure
 
 ```
 .
-├── agent_gemini.py          # 🌙 The autonomous agent (start here!)
-├── tasks.txt                # Your task list for the agent
-├── .env                     # API keys and configuration
-│
-├── docs/
-│   ├── AGENT_README.md      # 📖 Full agent documentation
-│   ├── ARCHITECTURE.md      # MVI architecture guide
-│   └── RUNNER_SETUP.md      # Self-hosted runner setup
-│
-├── scripts/
-│   ├── check_models.py      # List available Gemini models
-│   └── setup-protection.sh  # Configure GitHub branch protection
-│
-├── composeApp/              # 📱 KMP shared code (agent test bed)
+├── composeApp/              # KMP shared code
 │   ├── commonMain/          # Shared business logic & UI
 │   ├── androidMain/         # Android-specific code
 │   └── iosMain/             # iOS-specific code
 │
-└── iosApp/                  # 📱 iOS native entry point
+├── iosApp/                  # iOS native entry point
+│
+├── .github/
+│   └── workflows/
+│       └── pr-gateway.yml   # CI pipeline
+│
+├── docs/
+│   ├── ARCHITECTURE.md      # MVI pattern documentation
+│   └── RUNNER_SETUP.md      # Self-hosted runner guide
+│
+├── tasks.txt                # Agent tasks (gitignored)
+└── .env                     # Agent config (gitignored)
 ```
 
 ---
 
-## 📱 The Test Application
+## 🏗️ Architecture
 
-The mobile app is a **Virtual Card** example built with:
-- **Kotlin Multiplatform** (Android + iOS)
-- **Compose Multiplatform** for shared UI
-- **MVI Architecture** (Model-View-Intent)
+This project follows **MVI (Model-View-Intent)** architecture. See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for details.
 
-It provides a realistic codebase for the agent to work with, including:
-- ✅ Build verification (Gradle)
-- ✅ Static analysis (Detekt)
-- ✅ Unit tests
-- ✅ UI tests (Android instrumented)
-- ✅ CI pipeline (GitHub Actions)
+### Core Components
+- **State**: Immutable data class (`VirtualCardState`)
+- **Intent**: Sealed interface for user actions (`VirtualCardIntent`)
+- **Store**: ViewModel that processes intents (`VirtualCardStore`)
+- **UI**: Pure Compose functions
 
-### Build Commands
+---
 
+## 🔧 Build & Run
+
+### Android
 ```bash
-# Android
 ./gradlew :composeApp:assembleDebug
-
-# iOS
-# Open iosApp/ in Xcode
 ```
+Or use Android Studio's run configuration.
+
+### iOS
+Open `iosApp/` in Xcode and run.
 
 ---
 
-## 🔧 Setup
+## ✅ CI Pipeline
 
-### Why Local?
+The GitHub Actions workflow (`.github/workflows/pr-gateway.yml`) runs two jobs on every PR:
 
-Unlike web development, mobile development has hard dependencies on local tooling:
+1. **quality_gate** (GitHub-hosted)
+   - Detekt static analysis
+   - Build APK
+   - Unit tests
 
-| Requirement | Why It Can't Be Cloud-Only |
-|-------------|----------------------------|
-| Android SDK | Proprietary, large (10+ GB), version-specific |
-| Gradle | Long build times, local caching critical |
-| Android Emulator | Requires hardware virtualization (KVM/HAXM) |
-| Xcode | macOS-only, required for iOS builds |
-| iOS Simulator | macOS-only, tied to Xcode version |
+2. **ui_verification** (Self-hosted Mac)
+   - Android UI tests on emulator
 
-The agent runs on your development machine where these tools are already configured.
-
-### Prerequisites
-- **macOS** (required for iOS development and Android emulator)
-- Android Studio with SDK and emulator configured
-- Xcode (for iOS builds)
-- Python 3.9+ with virtual environment
-- [Gemini CLI](https://ai.google.dev/gemini-api/docs/cli) installed and authenticated
-- GitHub account with repository access
-
-### Environment Configuration
-
-Create a `.env` file:
-```bash
-GH_BOT_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx  # GitHub PAT for the agent
-BOT_USERNAME=agentnightshift           # Git commit author
-AGENT_MODEL=gemini-3-flash-preview     # Gemini model to use
-```
-
-See [docs/AGENT_README.md](./docs/AGENT_README.md) for complete setup instructions including:
-- GitHub bot account setup
-- Branch protection configuration
-- Self-hosted runner for UI tests
+See [docs/RUNNER_SETUP.md](./docs/RUNNER_SETUP.md) for self-hosted runner setup.
 
 ---
 
@@ -172,27 +106,22 @@ See [docs/AGENT_README.md](./docs/AGENT_README.md) for complete setup instructio
 
 | Document | Description |
 |----------|-------------|
-| [**Agent README**](./docs/AGENT_README.md) | Complete agent setup and usage guide |
-| [**Architecture**](./docs/ARCHITECTURE.md) | MVI pattern and code organization |
-| [**Runner Setup**](./docs/RUNNER_SETUP.md) | Self-hosted GitHub Actions runner |
+| [Architecture](./docs/ARCHITECTURE.md) | MVI pattern and conventions |
+| [Runner Setup](./docs/RUNNER_SETUP.md) | Self-hosted GitHub Actions runner |
+| [Night Shift Agent](https://github.com/chrishonson/night-shift-agent) | Autonomous coding agent |
 
 ---
 
-## 🧪 Why This Exists
+## 🧪 Why This Template?
 
-This project explores **agentic CI/CD**—the idea that an AI agent can:
+This template demonstrates **agentic CI/CD**—using AI agents to:
 1. Receive high-level tasks
-2. Autonomously implement them
-3. Verify correctness through existing guardrails (builds, tests, linters)
-4. Submit changes for human review via pull requests
-5. **Iterate on feedback** by continuing work on rejected PRs
+2. Autonomously implement code
+3. Verify through existing guardrails
+4. Submit PRs for human review
 
-The mobile app provides a constrained, real-world environment where the agent must:
-- Follow architectural patterns (MVI)
-- Pass static analysis (Detekt)
-- Maintain test coverage
-- Work within protected file boundaries
+The strict architecture and CI requirements force the agent to write production-quality code or fail trying.
 
 ---
 
-*Built with [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html) and [Gemini AI](https://ai.google.dev/).*
+*Built with [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html).*
