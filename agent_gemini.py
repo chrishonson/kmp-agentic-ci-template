@@ -190,7 +190,33 @@ def setup_origin_with_bot_token() -> bool:
         logger.info("✅ Git configured with bot credentials")
     return True
 
+def find_existing_open_pr() -> tuple[str, str]:
+    """Check if there's an existing open PR from a nightshift branch. Returns (branch_name, pr_url) or empty strings."""
+    repo_info = get_repo_info()
+    repo_name = repo_info.get("nameWithOwner", "")
+    success, output = run_cmd(f'gh pr list --state open --repo {repo_name} --author {BOT_USERNAME} --json headRefName,url --jq ".[] | select(.headRefName | startswith(\\"{BRANCH_PREFIX}/\\"))"')
+    if success and output.strip():
+        try:
+            # Parse the first matching PR
+            lines = output.strip().split('\n')
+            if lines:
+                pr_data = json.loads(lines[0])
+                return pr_data.get("headRefName", ""), pr_data.get("url", "")
+        except: pass
+    return "", ""
+
 def create_feature_branch() -> str:
+    # Check for existing open PR first
+    existing_branch, existing_pr = find_existing_open_pr()
+    if existing_branch:
+        logger.info(f"🔄 Found existing open PR: {existing_pr}")
+        logger.info(f"🌿 Reusing branch: {existing_branch}")
+        run_cmd(f"git fetch origin {existing_branch}")
+        run_cmd(f"git checkout {existing_branch}")
+        run_cmd(f"git pull origin {existing_branch}")
+        return existing_branch
+    
+    # No existing PR, create new branch
     branch_name = f"{BRANCH_PREFIX}/{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     logger.info(f"🌿 Creating feature branch: {branch_name}")
     
@@ -224,6 +250,14 @@ def create_pull_request(branch_name: str, title: str, body: str) -> tuple[bool, 
     repo_info = get_repo_info()
     repo_name = repo_info.get("nameWithOwner", "")
     if not repo_name: return False, "No repo"
+    
+    # Check if PR already exists for this branch
+    success, existing_pr = run_cmd(f'gh pr view {branch_name} --repo {repo_name} --json url --jq .url')
+    if success and existing_pr.strip():
+        pr_url = existing_pr.strip()
+        logger.info(f"✅ PR already exists: {pr_url}")
+        return True, pr_url
+    
     safe_title = title.replace('"', '\\"')
     safe_body = body.replace('"', '\\"')
     cmd = f'gh pr create --repo {repo_name} --head "{branch_name}" --title "{safe_title}" --body "{safe_body}"'
