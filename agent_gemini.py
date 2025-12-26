@@ -198,20 +198,19 @@ def create_feature_branch() -> str:
     branch_name = f"{BRANCH_PREFIX}/{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     logger.info(f"🌿 Creating feature branch: {branch_name}")
     
-    # Preserve agent script before reset
-    agent_script = None
-    if os.path.exists("agent_gemini.py"):
-        with open("agent_gemini.py", "r") as f:
-            agent_script = f.read()
-    
-    run_cmd("git checkout main")
-    run_cmd("git fetch origin")
-    run_cmd("git reset --hard origin/main")
-    
-    # Restore agent script after reset
-    if agent_script:
-        with open("agent_gemini.py", "w") as f:
-            f.write(agent_script)
+    # Safe checkout workflow
+    success, output = run_cmd("git checkout main")
+    if not success:
+        logger.error(f"❌ Failed to checkout main: {output}")
+        # Try to stash changes if checkout fails due to dirty state
+        logger.warning("⚠️ Stashing local changes to proceed...")
+        run_cmd("git stash push -m 'Night Shift Agent Stash'")
+        success, output = run_cmd("git checkout main")
+        if not success:
+             logger.error("❌ Still failed to checkout main. Aborting.")
+             sys.exit(1)
+
+    run_cmd("git pull origin main")
     
     run_cmd(f"git checkout -b {branch_name}")
     logger.info(f"✅ Created branch: {branch_name}")
