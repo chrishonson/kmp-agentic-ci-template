@@ -46,8 +46,12 @@ LOG_DIR = Path(".agent_logs")
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
-logging.basicConfig(level=logging.INFO, format='%(message)s',
-    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)])
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)]
+)
 logger = logging.getLogger("NightShiftAgent")
 
 # Client removed - using CLI
