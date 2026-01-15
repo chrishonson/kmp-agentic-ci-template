@@ -57,7 +57,7 @@ class VirtualCardUITest {
 
         // Initial state
         composeTestRule.onNodeWithTag("CreditCard").performClick()
-        
+
         // Should show locked state
         composeTestRule.onNodeWithText("CARD LOCKED").assertIsDisplayed()
 
