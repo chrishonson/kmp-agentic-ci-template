@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -53,7 +54,7 @@ private val FACEBOOK_COLOR = Color(FACEBOOK_COLOR_HEX)
 private const val APPLE_COLOR_HEX = 0xFF000000
 private val APPLE_COLOR = Color(APPLE_COLOR_HEX)
 
-@Composable
+ @Composable
 fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -85,7 +86,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                 value = username,
                 onValueChange = { username = it },
                 label = { Text("Username") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("UsernameField"),
                 shape = RoundedCornerShape(CORNER_RADIUS.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -117,7 +118,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("PasswordField"),
                 shape = RoundedCornerShape(CORNER_RADIUS.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -153,7 +154,8 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(BUTTON_HEIGHT.dp),
+                    .height(BUTTON_HEIGHT.dp)
+                    .testTag("LoginButton"),
                 shape = RoundedCornerShape(CORNER_RADIUS.dp),
                 enabled = !isLoading && username.isNotBlank() && password.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
@@ -196,7 +198,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     }
 }
 
-@Composable
+ @Composable
 private fun LoginHeader() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -217,7 +219,7 @@ private fun LoginHeader() {
     }
 }
 
-@Composable
+ @Composable
 private fun SocialLoginButtons(
     isLoading: Boolean,
     loginService: LoginService,
