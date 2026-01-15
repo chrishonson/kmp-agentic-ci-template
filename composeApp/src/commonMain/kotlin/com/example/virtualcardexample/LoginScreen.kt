@@ -48,8 +48,10 @@ private const val PROGRESS_SIZE = 24
 private const val STROKE_WIDTH = 2
 private const val OPACITY_LOW = 0.6f
 private const val OPACITY_BORDER = 0.2f
+private const val FACEBOOK_COLOR_HEX = 0xFF1877F2
+private val FACEBOOK_COLOR = Color(FACEBOOK_COLOR_HEX)
 
- @Composable
+@Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -73,21 +75,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Welcome Back",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp
-            )
-
-            Spacer(modifier = Modifier.height(SPACER_TINY.dp))
-
-            Text(
-                text = "Sign in to continue",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_LOW)
-            )
+            LoginHeader()
 
             Spacer(modifier = Modifier.height(SPACER_LARGE.dp))
 
@@ -195,83 +183,101 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        val result = loginService.loginWithGoogle()
-                        isLoading = false
-                        if (result.isSuccess) {
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = result.exceptionOrNull()?.message ?: "Google login failed"
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BUTTON_HEIGHT.dp),
-                shape = RoundedCornerShape(CORNER_RADIUS.dp),
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(PROGRESS_SIZE.dp),
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        strokeWidth = STROKE_WIDTH.dp
-                    )
-                } else {
-                    Text(
-                        text = "LOGIN WITH GOOGLE",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+            SocialLoginButtons(
+                isLoading = isLoading,
+                loginService = loginService,
+                scope = scope,
+                onLoginSuccess = onLoginSuccess,
+                onError = { errorMessage = it }
+            )
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+@Composable
+private fun LoginHeader() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Welcome Back",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp
+        )
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        val result = loginService.loginWithFacebook()
-                        isLoading = false
-                        if (result.isSuccess) {
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = result.exceptionOrNull()?.message ?: "Facebook login failed"
-                        }
+        Spacer(modifier = Modifier.height(SPACER_TINY.dp))
+
+        Text(
+            text = "Sign in to continue",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_LOW)
+        )
+    }
+}
+
+@Composable
+private fun SocialLoginButtons(
+    isLoading: Boolean,
+    loginService: LoginService,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoginSuccess: () -> Unit,
+    onError: (String) -> Unit
+) {
+    Column {
+        Button(
+            onClick = {
+                scope.launch {
+                    val result = loginService.loginWithGoogle()
+                    if (result.isSuccess) {
+                        onLoginSuccess()
+                    } else {
+                        onError(result.exceptionOrNull()?.message ?: "Google login failed")
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BUTTON_HEIGHT.dp),
-                shape = RoundedCornerShape(CORNER_RADIUS.dp),
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1877F2)
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(PROGRESS_SIZE.dp),
-                        color = Color.White,
-                        strokeWidth = STROKE_WIDTH.dp
-                    )
-                } else {
-                    Text(
-                        text = "LOGIN WITH FACEBOOK",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
                 }
-            }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BUTTON_HEIGHT.dp),
+            shape = RoundedCornerShape(CORNER_RADIUS.dp),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text(
+                text = "LOGIN WITH GOOGLE",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+
+        Button(
+            onClick = {
+                scope.launch {
+                    val result = loginService.loginWithFacebook()
+                    if (result.isSuccess) {
+                        onLoginSuccess()
+                    } else {
+                        onError(result.exceptionOrNull()?.message ?: "Facebook login failed")
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BUTTON_HEIGHT.dp),
+            shape = RoundedCornerShape(CORNER_RADIUS.dp),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = FACEBOOK_COLOR
+            )
+        ) {
+            Text(
+                text = "LOGIN WITH FACEBOOK",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
