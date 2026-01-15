@@ -40,6 +40,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val CARD_WIDTH_FRACTION = 0.9f
 private const val CHIP_COLOR = 0xFFE0E0E0
+private const val SPLASH_DELAY_MS = 2000L
+private const val CROSSFADE_DURATION_MS = 1000
 
 @Composable
 @Preview
@@ -48,11 +50,14 @@ fun App() {
         var showLanding by remember { mutableStateOf(true) }
 
         LaunchedEffect(Unit) {
-            delay(2000)
+            delay(SPLASH_DELAY_MS)
             showLanding = false
         }
 
-        Crossfade(targetState = showLanding, animationSpec = tween(1000)) { landing ->
+        Crossfade(
+            targetState = showLanding,
+            animationSpec = tween(CROSSFADE_DURATION_MS)
+        ) { landing ->
             if (landing) {
                 Box(
                     modifier = Modifier
