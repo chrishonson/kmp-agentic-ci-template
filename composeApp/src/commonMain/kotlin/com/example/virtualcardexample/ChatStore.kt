@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
+    val isBotTyping: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -22,18 +23,27 @@ sealed interface ChatIntent {
 
 class ChatStore(
     private val chatService: ChatService,
+    private val analyticsService: AnalyticsService,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(ChatState())
     val state: StateFlow<ChatState> = _state.asStateFlow()
 
     init {
+        analyticsService.logEvent("chat_session_started")
         dispatch(ChatIntent.LoadMessages)
+
+        chatService.isBotTyping()
+            .onEach { isTyping ->
+                _state.update { it.copy(isBotTyping = isTyping) }
+            }
+            .launchIn(scope)
     }
 
     fun dispatch(intent: ChatIntent) {
         when (intent) {
             is ChatIntent.SendMessage -> {
+                analyticsService.logEvent("message_sent", mapOf("sender" to intent.sender))
                 scope.launch {
                     chatService.sendMessage(intent.sender, intent.content)
                 }
@@ -41,6 +51,12 @@ class ChatStore(
             is ChatIntent.LoadMessages -> {
                 chatService.getMessages()
                     .onEach { msgs ->
+                        if (msgs.size > _state.value.messages.size) {
+                            val lastMessage = msgs.last()
+                            if (lastMessage.sender == "AWS Bot") {
+                                analyticsService.logEvent("bot_response_received")
+                            }
+                        }
                         _state.update { it.copy(messages = msgs) }
                     }
                     .launchIn(scope)

@@ -96,8 +96,9 @@ fun App() {
                 }
                 is AppState.Chat -> {
                     val scope = rememberCoroutineScope()
-                    val chatService = remember { ChatServiceStub() }
-                    val chatStore = remember { ChatStore(chatService, scope) }
+                    val analyticsService = rememberAnalyticsService()
+                    val chatService = remember { AwsChatService() }
+                    val chatStore = remember { ChatStore(chatService, analyticsService, scope) }
                     ChatScreen(
                         store = chatStore,
                         username = state.username,
