@@ -54,7 +54,7 @@ private const val APPLE_COLOR_HEX = 0xFF000000
 private val APPLE_COLOR = Color(APPLE_COLOR_HEX)
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
+fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -145,7 +145,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         val result = loginService.login(username, password)
                         isLoading = false
                         if (result.isSuccess) {
-                            onLoginSuccess()
+                            onLoginSuccess(username)
                         } else {
                             errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
                         }
@@ -222,7 +222,7 @@ private fun SocialLoginButtons(
     isLoading: Boolean,
     loginService: LoginService,
     scope: kotlinx.coroutines.CoroutineScope,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (String) -> Unit,
     onError: (String) -> Unit
 ) {
     Column {
@@ -231,7 +231,7 @@ private fun SocialLoginButtons(
                 scope.launch {
                     val result = loginService.loginWithGoogle()
                     if (result.isSuccess) {
-                        onLoginSuccess()
+                        onLoginSuccess("Google User")
                     } else {
                         onError(result.exceptionOrNull()?.message ?: "Google login failed")
                     }
@@ -260,7 +260,7 @@ private fun SocialLoginButtons(
                 scope.launch {
                     val result = loginService.loginWithFacebook()
                     if (result.isSuccess) {
-                        onLoginSuccess()
+                        onLoginSuccess("Facebook User")
                     } else {
                         onError(result.exceptionOrNull()?.message ?: "Facebook login failed")
                     }
@@ -289,7 +289,7 @@ private fun SocialLoginButtons(
                 scope.launch {
                     val result = loginService.loginWithApple()
                     if (result.isSuccess) {
-                        onLoginSuccess()
+                        onLoginSuccess("Apple User")
                     } else {
                         onError(result.exceptionOrNull()?.message ?: "Apple login failed")
                     }

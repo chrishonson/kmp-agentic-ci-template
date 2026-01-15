@@ -46,17 +46,17 @@ private const val CHIP_COLOR = 0xFFE0E0E0
 private const val SPLASH_DELAY_MS = 2000L
 private const val CROSSFADE_DURATION_MS = 1000
 
-enum class AppState {
-    Splash,
-    Login,
-    Main
+sealed class AppState {
+    data object Splash : AppState()
+    data object Login : AppState()
+    data class Main(val username: String) : AppState()
 }
 
 @Composable
 @Preview
 fun App() {
     AppTheme(darkTheme = true) {
-        var appState by remember { mutableStateOf(AppState.Splash) }
+        var appState by remember { mutableStateOf<AppState>(AppState.Splash) }
 
         LaunchedEffect(Unit) {
             delay(SPLASH_DELAY_MS)
@@ -68,7 +68,7 @@ fun App() {
             animationSpec = tween(CROSSFADE_DURATION_MS)
         ) { state ->
             when (state) {
-                AppState.Splash -> {
+                is AppState.Splash -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -78,15 +78,15 @@ fun App() {
                         HeartAnimation()
                     }
                 }
-                AppState.Login -> {
-                    LoginScreen(onLoginSuccess = {
-                        appState = AppState.Main
+                is AppState.Login -> {
+                    LoginScreen(onLoginSuccess = { username ->
+                        appState = AppState.Main(username)
                     })
                 }
-                AppState.Main -> {
+                is AppState.Main -> {
                     val scope = rememberCoroutineScope()
                     val store = remember { VirtualCardStore(scope) }
-                    VirtualCardScreen(store)
+                    VirtualCardScreen(store, state.username)
                 }
             }
         }
@@ -94,15 +94,25 @@ fun App() {
 }
 
 @Composable
-fun VirtualCardScreen(store: VirtualCardStore) {
+fun VirtualCardScreen(store: VirtualCardStore, username: String) {
     val state by store.state.collectAsState()
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
+        Text(
+            text = "Hello, $username!",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
         VirtualCard(
             cardNumber = state.cardNumber,
             cardHolder = state.cardHolder,
