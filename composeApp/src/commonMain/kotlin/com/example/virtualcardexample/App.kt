@@ -3,6 +3,7 @@ package com.example.virtualcardexample
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +22,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,39 +46,57 @@ private const val CHIP_COLOR = 0xFFE0E0E0
 private const val SPLASH_DELAY_MS = 2000L
 private const val CROSSFADE_DURATION_MS = 1000
 
+enum class AppState {
+    Splash,
+    Login,
+    Main
+}
+
 @Composable
 @Preview
 fun App() {
     AppTheme(darkTheme = true) {
-        var showLanding by remember { mutableStateOf(true) }
+        var appState by remember { mutableStateOf(AppState.Splash) }
 
         LaunchedEffect(Unit) {
             delay(SPLASH_DELAY_MS)
-            showLanding = false
+            appState = AppState.Login
         }
 
         Crossfade(
-            targetState = showLanding,
+            targetState = appState,
             animationSpec = tween(CROSSFADE_DURATION_MS)
-        ) { landing ->
-            if (landing) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
-                    contentAlignment = Alignment.Center
-                ) {
-                    HeartAnimation()
+        ) { state ->
+            when (state) {
+                AppState.Splash -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        HeartAnimation()
+                    }
                 }
-            } else {
-                VirtualCardScreen()
+                AppState.Login -> {
+                    LoginScreen(onLoginSuccess = {
+                        appState = AppState.Main
+                    })
+                }
+                AppState.Main -> {
+                    val scope = rememberCoroutineScope()
+                    val store = remember { VirtualCardStore(scope) }
+                    VirtualCardScreen(store)
+                }
             }
         }
     }
 }
 
 @Composable
-fun VirtualCardScreen() {
+fun VirtualCardScreen(store: VirtualCardStore) {
+    val state by store.state.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -83,12 +104,13 @@ fun VirtualCardScreen() {
         contentAlignment = Alignment.Center
     ) {
         VirtualCard(
-            cardNumber = "**** **** **** 1234",
-            cardHolder = "NIGHT SHIFT AGENT",
-            expiry = "01/26",
-            cvv = "999",
-            isLoading = false,
-            isLocked = false
+            cardNumber = state.cardNumber,
+            cardHolder = state.cardHolder,
+            expiry = state.expiry,
+            cvv = state.cvv,
+            isLoading = state.isLoading,
+            isLocked = state.isLocked,
+            onToggleLock = { store.dispatch(VirtualCardIntent.ToggleLock) }
         )
     }
 }
@@ -100,12 +122,14 @@ fun VirtualCard(
     expiry: String,
     cvv: String,
     isLoading: Boolean,
-    isLocked: Boolean
+    isLocked: Boolean,
+    onToggleLock: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth(CARD_WIDTH_FRACTION)
             .height(220.dp)
+            .clickable { onToggleLock() }
             .testTag("CreditCard"),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -158,7 +182,7 @@ fun VirtualCard(
                 ) {
                     // Bank Name / Logo Placeholder
                     Text(
-                        text = "NeoBank",
+                        text = "be my valentine",
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
