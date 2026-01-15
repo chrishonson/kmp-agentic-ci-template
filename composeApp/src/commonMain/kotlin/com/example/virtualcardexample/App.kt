@@ -47,56 +47,8 @@ fun App() {
 
 @Composable
 fun VirtualCardScreen() {
-    val store = androidx.lifecycle.viewmodel.compose.viewModel { VirtualCardStore() }
-    val state by store.state.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .safeContentPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        VirtualCard(
-            cardNumber = state.cardNumber,
-            cardHolder = state.cardHolder,
-            expiry = state.expiry,
-            cvv = state.cvv,
-            isLoading = state.isLoading,
-            isLocked = state.isLocked
-        )
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { store.dispatch(VirtualCardIntent.ToggleVisibility) },
-            modifier = Modifier.testTag("RevealButton"),
-            enabled = !state.isLocked && !state.isLoading
-        ) {
-            Text(state.buttonText)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { store.dispatch(VirtualCardIntent.ToggleLock) },
-            modifier = Modifier.testTag("LockCardButton"),
-            enabled = !state.isLoading
-        ) {
-            Text(if (state.isLocked) "Unlock Card" else "Lock Card")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { store.dispatch(VirtualCardIntent.ReplaceCard) },
-            modifier = Modifier.testTag("ReplaceCardButton"),
-            enabled = !state.isLocked && !state.isLoading
-        ) {
-            Text("Replace Card")
-        }
-    }
 }
 
 @Composable
