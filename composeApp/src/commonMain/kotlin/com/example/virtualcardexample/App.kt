@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,15 +46,16 @@ private const val CARD_WIDTH_FRACTION = 0.9f
 private const val CHIP_COLOR = 0xFFE0E0E0
 private const val SPLASH_DELAY_MS = 2000L
 private const val CROSSFADE_DURATION_MS = 1000
+private const val CHAT_BUTTON_WIDTH_FRACTION = 0.8f
 
 sealed class AppState {
     data object Splash : AppState()
     data object Login : AppState()
     data class Main(val username: String) : AppState()
+    data class Chat(val username: String) : AppState()
 }
 
-@Composable
-@Preview
+ @Composable @Preview
 fun App() {
     AppTheme(darkTheme = true) {
         var appState by remember { mutableStateOf<AppState>(AppState.Splash) }
@@ -86,15 +88,33 @@ fun App() {
                 is AppState.Main -> {
                     val scope = rememberCoroutineScope()
                     val store = remember { VirtualCardStore(scope) }
-                    VirtualCardScreen(store, state.username)
+                    VirtualCardScreen(
+                        store = store,
+                        username = state.username,
+                        onOpenChat = { appState = AppState.Chat(state.username) }
+                    )
+                }
+                is AppState.Chat -> {
+                    val scope = rememberCoroutineScope()
+                    val chatService = remember { ChatServiceStub() }
+                    val chatStore = remember { ChatStore(chatService, scope) }
+                    ChatScreen(
+                        store = chatStore,
+                        username = state.username,
+                        onBack = { appState = AppState.Main(state.username) }
+                    )
                 }
             }
         }
     }
 }
 
-@Composable
-fun VirtualCardScreen(store: VirtualCardStore, username: String) {
+ @Composable
+fun VirtualCardScreen(
+    store: VirtualCardStore,
+    username: String,
+    onOpenChat: () -> Unit
+) {
     val state by store.state.collectAsState()
 
     Column(
@@ -122,10 +142,19 @@ fun VirtualCardScreen(store: VirtualCardStore, username: String) {
             isLocked = state.isLocked,
             onToggleLock = { store.dispatch(VirtualCardIntent.ToggleLock) }
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onOpenChat,
+            modifier = Modifier.fillMaxWidth(CHAT_BUTTON_WIDTH_FRACTION)
+        ) {
+            Text("AWS Support Chat")
+        }
     }
 }
 
-@Composable
+ @Composable
 fun VirtualCard(
     cardNumber: String,
     cardHolder: String,
@@ -142,12 +171,10 @@ fun VirtualCard(
             .clickable { onToggleLock() }
             .testTag("CreditCard"),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background Gradient or Design
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -190,7 +217,6 @@ fun VirtualCard(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Bank Name / Logo Placeholder
                     Text(
                         text = "be my valentine",
                         style = MaterialTheme.typography.titleLarge,
@@ -198,7 +224,6 @@ fun VirtualCard(
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Chip
                     Box(
                         modifier = Modifier
                             .width(50.dp)
@@ -209,7 +234,6 @@ fun VirtualCard(
                             )
                     )
 
-                    // Card Details
                     Column {
                         Text(
                             text = cardNumber,

@@ -1,0 +1,50 @@
+package com.example.virtualcardexample
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.launch
+
+data class ChatState(
+    val messages: List<ChatMessage> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+sealed interface ChatIntent {
+    data class SendMessage(val sender: String, val content: String) : ChatIntent
+    data object LoadMessages : ChatIntent
+}
+
+class ChatStore(
+    private val chatService: ChatService,
+    private val scope: CoroutineScope
+) {
+    private val _state = MutableStateFlow(ChatState())
+    val state: StateFlow<ChatState> = _state.asStateFlow()
+
+    init {
+        dispatch(ChatIntent.LoadMessages)
+    }
+
+    fun dispatch(intent: ChatIntent) {
+        when (intent) {
+            is ChatIntent.SendMessage -> {
+                scope.launch {
+                    chatService.sendMessage(intent.sender, intent.content)
+                }
+            }
+            is ChatIntent.LoadMessages -> {
+                chatService.getMessages()
+                    .onEach { msgs ->
+                        _state.update { it.copy(messages = msgs) }
+                    }
+                    .launchIn(scope)
+            }
+        }
+    }
+}
