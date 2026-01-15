@@ -8,6 +8,7 @@ private const val MIN_PASSWORD_LENGTH = 6
 interface LoginService {
     suspend fun login(username: String, password: String): Result<Unit>
     suspend fun loginWithGoogle(): Result<Unit>
+    suspend fun loginWithFacebook(): Result<Unit>
 }
 
 class LoginServiceStub : LoginService {
@@ -21,6 +22,11 @@ class LoginServiceStub : LoginService {
     }
 
     override suspend fun loginWithGoogle(): Result<Unit> {
+        delay(LOGIN_DELAY_MS) // Simulate network delay
+        return Result.success(Unit)
+    }
+
+    override suspend fun loginWithFacebook(): Result<Unit> {
         delay(LOGIN_DELAY_MS) // Simulate network delay
         return Result.success(Unit)
     }

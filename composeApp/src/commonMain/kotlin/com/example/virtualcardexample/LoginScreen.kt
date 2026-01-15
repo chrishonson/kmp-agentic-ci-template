@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -226,6 +227,46 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 } else {
                     Text(
                         text = "LOGIN WITH GOOGLE",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        val result = loginService.loginWithFacebook()
+                        isLoading = false
+                        if (result.isSuccess) {
+                            onLoginSuccess()
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Facebook login failed"
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(BUTTON_HEIGHT.dp),
+                shape = RoundedCornerShape(CORNER_RADIUS.dp),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1877F2)
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(PROGRESS_SIZE.dp),
+                        color = Color.White,
+                        strokeWidth = STROKE_WIDTH.dp
+                    )
+                } else {
+                    Text(
+                        text = "LOGIN WITH FACEBOOK",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
