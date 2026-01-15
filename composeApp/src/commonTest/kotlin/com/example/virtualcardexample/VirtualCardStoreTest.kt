@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -51,6 +52,7 @@ class VirtualCardStoreTest {
     fun `test refresh`() = runTest {
         val store = VirtualCardStore(this)
         store.dispatch(VirtualCardIntent.Refresh)
+        runCurrent()
         assertTrue(store.state.value.isLoading)
         advanceUntilIdle()
         assertFalse(store.state.value.isLoading)
