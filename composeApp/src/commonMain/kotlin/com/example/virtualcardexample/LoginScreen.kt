@@ -50,6 +50,8 @@ private const val OPACITY_LOW = 0.6f
 private const val OPACITY_BORDER = 0.2f
 private const val FACEBOOK_COLOR_HEX = 0xFF1877F2
 private val FACEBOOK_COLOR = Color(FACEBOOK_COLOR_HEX)
+private const val APPLE_COLOR_HEX = 0xFF000000
+private val APPLE_COLOR = Color(APPLE_COLOR_HEX)
 
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
@@ -275,6 +277,35 @@ private fun SocialLoginButtons(
         ) {
             Text(
                 text = "LOGIN WITH FACEBOOK",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+
+        Button(
+            onClick = {
+                scope.launch {
+                    val result = loginService.loginWithApple()
+                    if (result.isSuccess) {
+                        onLoginSuccess()
+                    } else {
+                        onError(result.exceptionOrNull()?.message ?: "Apple login failed")
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BUTTON_HEIGHT.dp),
+            shape = RoundedCornerShape(CORNER_RADIUS.dp),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = APPLE_COLOR
+            )
+        ) {
+            Text(
+                text = "LOGIN WITH APPLE",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

@@ -9,6 +9,7 @@ interface LoginService {
     suspend fun login(username: String, password: String): Result<Unit>
     suspend fun loginWithGoogle(): Result<Unit>
     suspend fun loginWithFacebook(): Result<Unit>
+    suspend fun loginWithApple(): Result<Unit>
 }
 
 class LoginServiceStub : LoginService {
@@ -16,7 +17,8 @@ class LoginServiceStub : LoginService {
         delay(LOGIN_DELAY_MS) // Simulate network delay
         return if (username.isNotBlank() && password.length >= MIN_PASSWORD_LENGTH) {
             Result.success(Unit)
-        } else {
+        }
+        else {
             Result.failure(Exception("Invalid credentials"))
         }
     }
@@ -27,6 +29,11 @@ class LoginServiceStub : LoginService {
     }
 
     override suspend fun loginWithFacebook(): Result<Unit> {
+        delay(LOGIN_DELAY_MS) // Simulate network delay
+        return Result.success(Unit)
+    }
+
+    override suspend fun loginWithApple(): Result<Unit> {
         delay(LOGIN_DELAY_MS) // Simulate network delay
         return Result.success(Unit)
     }
