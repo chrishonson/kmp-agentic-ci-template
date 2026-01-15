@@ -183,6 +183,54 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+
+            Text(
+                text = "OR",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_LOW)
+            )
+
+            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        val result = loginService.loginWithGoogle()
+                        isLoading = false
+                        if (result.isSuccess) {
+                            onLoginSuccess()
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Google login failed"
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(BUTTON_HEIGHT.dp),
+                shape = RoundedCornerShape(CORNER_RADIUS.dp),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(PROGRESS_SIZE.dp),
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        strokeWidth = STROKE_WIDTH.dp
+                    )
+                } else {
+                    Text(
+                        text = "LOGIN WITH GOOGLE",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
