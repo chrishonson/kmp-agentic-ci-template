@@ -24,7 +24,8 @@ class ChatStoreTest {
 
     @Test
     fun testSendMessage() = runTest(testDispatcher) {
-        store = ChatStore(chatService, this)
+        // Use backgroundScope for the store so that the LoadMessages collection is cancelled at the end of the test
+        store = ChatStore(chatService, backgroundScope)
         val sender = "TestUser"
         val content = "Hello AWS"
 
@@ -41,7 +42,8 @@ class ChatStoreTest {
 
     @Test
     fun testLoadMessages() = runTest(testDispatcher) {
-        store = ChatStore(chatService, this)
+        // Use backgroundScope for the store so that the LoadMessages collection is cancelled at the end of the test
+        store = ChatStore(chatService, backgroundScope)
 
         val state = store.state.value
         assertTrue(state.messages.isEmpty())
