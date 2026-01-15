@@ -36,6 +36,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
+private const val SCREEN_PADDING = 32
+private const val SPACER_TINY = 8
+private const val SPACER_LARGE = 48
+private const val CORNER_RADIUS = 12
+private const val SPACER_MEDIUM = 16
+private const val SPACER_BUTTON = 24
+private const val BUTTON_HEIGHT = 56
+private const val PROGRESS_SIZE = 24
+private const val STROKE_WIDTH = 2
+private const val OPACITY_LOW = 0.6f
+private const val OPACITY_BORDER = 0.2f
+
  @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     var username by remember { mutableStateOf("") }
@@ -43,7 +55,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    
+
     val scope = rememberCoroutineScope()
     val loginService = remember { LoginServiceStub() }
 
@@ -56,7 +68,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(SCREEN_PADDING.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -67,37 +79,43 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp
             )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
+
+            Spacer(modifier = Modifier.height(SPACER_TINY.dp))
+
             Text(
                 text = "Sign in to continue",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_LOW)
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(SPACER_LARGE.dp))
 
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
                 label = { Text("Username") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(CORNER_RADIUS.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_BORDER)
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
+
+            val visualTransformation = if (passwordVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            }
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = visualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -109,22 +127,22 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(CORNER_RADIUS.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_BORDER)
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(SPACER_BUTTON.dp))
 
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = SPACER_MEDIUM.dp)
                 )
             }
 
@@ -144,8 +162,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(BUTTON_HEIGHT.dp),
+                shape = RoundedCornerShape(CORNER_RADIUS.dp),
                 enabled = !isLoading && username.isNotBlank() && password.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
@@ -153,9 +171,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(PROGRESS_SIZE.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
+                        strokeWidth = STROKE_WIDTH.dp
                     )
                 } else {
                     Text(
