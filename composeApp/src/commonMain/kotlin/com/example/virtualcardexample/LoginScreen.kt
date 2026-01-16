@@ -146,7 +146,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                         val result = loginService.login(username, password)
                         isLoading = false
                         if (result.isSuccess) {
-                            onLoginSuccess(username)
+                            onLoginSuccess(result.getOrNull()?.name ?: username)
                         } else {
                             errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
                         }
@@ -233,7 +233,7 @@ private fun SocialLoginButtons(
                 scope.launch {
                     val result = loginService.loginWithGoogle()
                     if (result.isSuccess) {
-                        onLoginSuccess("Google User")
+                        onLoginSuccess(result.getOrNull()?.name ?: "Google User")
                     } else {
                         onError(result.exceptionOrNull()?.message ?: "Google login failed")
                     }
@@ -262,7 +262,7 @@ private fun SocialLoginButtons(
                 scope.launch {
                     val result = loginService.loginWithFacebook()
                     if (result.isSuccess) {
-                        onLoginSuccess("Facebook User")
+                        onLoginSuccess(result.getOrNull()?.name ?: "Facebook User")
                     } else {
                         onError(result.exceptionOrNull()?.message ?: "Facebook login failed")
                     }
@@ -291,7 +291,7 @@ private fun SocialLoginButtons(
                 scope.launch {
                     val result = loginService.loginWithApple()
                     if (result.isSuccess) {
-                        onLoginSuccess("Apple User")
+                        onLoginSuccess(result.getOrNull()?.name ?: "Apple User")
                     } else {
                         onError(result.exceptionOrNull()?.message ?: "Apple login failed")
                     }
