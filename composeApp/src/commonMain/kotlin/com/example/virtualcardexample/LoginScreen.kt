@@ -28,7 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -49,10 +48,6 @@ private const val PROGRESS_SIZE = 24
 private const val STROKE_WIDTH = 2
 private const val OPACITY_LOW = 0.6f
 private const val OPACITY_BORDER = 0.2f
-private const val FACEBOOK_COLOR_HEX = 0xFF1877F2
-private val FACEBOOK_COLOR = Color(FACEBOOK_COLOR_HEX)
-private const val APPLE_COLOR_HEX = 0xFF000000
-private val APPLE_COLOR = Color(APPLE_COLOR_HEX)
 
  @Composable
 fun LoginScreen(onLoginSuccess: (String) -> Unit) {
@@ -127,16 +122,16 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                 )
             )
 
-            Spacer(modifier = Modifier.height(SPACER_BUTTON.dp))
-
-            if (errorMessage != null) {
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(SPACER_TINY.dp))
                 Text(
-                    text = errorMessage!!,
+                    text = it,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = SPACER_MEDIUM.dp)
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
+
+            Spacer(modifier = Modifier.height(SPACER_BUTTON.dp))
 
             Button(
                 onClick = {
@@ -144,20 +139,19 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                         isLoading = true
                         errorMessage = null
                         val result = loginService.login(username, password)
-                        isLoading = false
                         if (result.isSuccess) {
                             onLoginSuccess(username)
                         } else {
                             errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
                         }
+                        isLoading = false
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(BUTTON_HEIGHT.dp)
-                    .testTag("LoginButton"),
+                    .height(BUTTON_HEIGHT.dp),
                 shape = RoundedCornerShape(CORNER_RADIUS.dp),
-                enabled = !isLoading && username.isNotBlank() && password.isNotBlank(),
+                enabled = !isLoading && username.isNotBlank() && password.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
@@ -176,24 +170,6 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
-
-            Text(
-                text = "OR",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_LOW)
-            )
-
-            Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
-
-            SocialLoginButtons(
-                isLoading = isLoading,
-                loginService = loginService,
-                scope = scope,
-                onLoginSuccess = onLoginSuccess,
-                onError = { errorMessage = it }
-            )
         }
     }
 }
@@ -216,101 +192,5 @@ private fun LoginHeader() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = OPACITY_LOW)
         )
-    }
-}
-
- @Composable
-private fun SocialLoginButtons(
-    isLoading: Boolean,
-    loginService: LoginService,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onLoginSuccess: (String) -> Unit,
-    onError: (String) -> Unit
-) {
-    Column {
-        Button(
-            onClick = {
-                scope.launch {
-                    val result = loginService.loginWithGoogle()
-                    if (result.isSuccess) {
-                        onLoginSuccess("Google User")
-                    } else {
-                        onError(result.exceptionOrNull()?.message ?: "Google login failed")
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(BUTTON_HEIGHT.dp),
-            shape = RoundedCornerShape(CORNER_RADIUS.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary
-            )
-        ) {
-            Text(
-                text = "LOGIN WITH GOOGLE",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
-
-        Button(
-            onClick = {
-                scope.launch {
-                    val result = loginService.loginWithFacebook()
-                    if (result.isSuccess) {
-                        onLoginSuccess("Facebook User")
-                    } else {
-                        onError(result.exceptionOrNull()?.message ?: "Facebook login failed")
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(BUTTON_HEIGHT.dp),
-            shape = RoundedCornerShape(CORNER_RADIUS.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = FACEBOOK_COLOR
-            )
-        ) {
-            Text(
-                text = "LOGIN WITH FACEBOOK",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(SPACER_MEDIUM.dp))
-
-        Button(
-            onClick = {
-                scope.launch {
-                    val result = loginService.loginWithApple()
-                    if (result.isSuccess) {
-                        onLoginSuccess("Apple User")
-                    } else {
-                        onError(result.exceptionOrNull()?.message ?: "Apple login failed")
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(BUTTON_HEIGHT.dp),
-            shape = RoundedCornerShape(CORNER_RADIUS.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = APPLE_COLOR
-            )
-        ) {
-            Text(
-                text = "LOGIN WITH APPLE",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
     }
 }

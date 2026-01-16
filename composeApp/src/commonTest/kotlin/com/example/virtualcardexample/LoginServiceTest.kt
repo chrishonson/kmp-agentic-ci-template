@@ -19,22 +19,4 @@ class LoginServiceTest {
         val result = loginService.login("", "")
         assertTrue(result.isFailure)
     }
-
-    @Test
-    fun `test loginWithGoogle success`() = runTest {
-        val result = loginService.loginWithGoogle()
-        assertTrue(result.isSuccess)
-    }
-
-    @Test
-    fun `test loginWithFacebook success`() = runTest {
-        val result = loginService.loginWithFacebook()
-        assertTrue(result.isSuccess)
-    }
-
-    @Test
-    fun `test loginWithApple success`() = runTest {
-        val result = loginService.loginWithApple()
-        assertTrue(result.isSuccess)
-    }
 }
