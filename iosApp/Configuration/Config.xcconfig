@@ -1,6 +1,6 @@
 TEAM_ID=
 
-PRODUCT_NAME=VirtualCardExample
+PRODUCT_NAME=be my valentine
 PRODUCT_BUNDLE_IDENTIFIER=com.example.virtualcardexample.VirtualCardExample$(TEAM_ID)
 
 CURRENT_PROJECT_VERSION=1
