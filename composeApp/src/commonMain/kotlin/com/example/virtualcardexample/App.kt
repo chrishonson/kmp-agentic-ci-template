@@ -118,7 +118,7 @@ fun MainScreen(
             onClick = onOpenChat,
             modifier = Modifier.fillMaxWidth(CHAT_BUTTON_WIDTH_FRACTION)
         ) {
-            Text("Chat with me")
+            Text("AWS Support Chat")
         }
     }
 }
