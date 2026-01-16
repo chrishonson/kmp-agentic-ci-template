@@ -11,7 +11,9 @@ import kotlinx.coroutines.launch
 
 data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
-    val isBotTyping: Boolean = false
+    val isBotTyping: Boolean = false,
+    val isLoading: Boolean = false,
+    val error: String? = null
 )
 
 sealed interface ChatIntent {
