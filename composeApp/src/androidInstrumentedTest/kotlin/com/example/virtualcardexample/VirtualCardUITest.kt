@@ -32,7 +32,7 @@ class VirtualCardUITest {
         val testUser = "JohnDoe"
         loginAs(testUser)
 
-        composeTestRule.onNodeWithText("Hello, $testUser!").assertIsDisplayed()
+        composeTestRule.onNodeWithText("$testUser, will you be my valentine?").assertIsDisplayed()
     }
 
     @Test

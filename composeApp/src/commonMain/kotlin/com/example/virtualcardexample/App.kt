@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -96,7 +97,7 @@ fun App() {
                 }
                 is AppState.Chat -> {
                     val scope = rememberCoroutineScope()
-                    val analyticsService = rememberAnalyticsService()
+                    val analyticsService = remember { ConsoleAnalyticsService() }
                     val chatService = remember { AwsChatService() }
                     val chatStore = remember { ChatStore(chatService, analyticsService, scope) }
                     ChatScreen(
@@ -127,11 +128,12 @@ fun VirtualCardScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Hello, $username!",
+            text = "$username, will you be my valentine?",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 32.dp),
+            textAlign = TextAlign.Center
         )
 
         VirtualCard(
@@ -150,7 +152,7 @@ fun VirtualCardScreen(
             onClick = onOpenChat,
             modifier = Modifier.fillMaxWidth(CHAT_BUTTON_WIDTH_FRACTION)
         ) {
-            Text("AWS Support Chat")
+            Text("Chat with me")
         }
     }
 }

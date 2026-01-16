@@ -47,7 +47,7 @@ class ChatStoreTest {
         assertEquals(content, state.messages[0].content)
         assertEquals("AWS Bot", state.messages[1].sender)
         assertTrue(state.messages[1].content.contains("Hello"))
-        
+
         // Verify analytics
         assertTrue(analyticsService.events.contains("message_sent"))
     }
@@ -56,7 +56,6 @@ class ChatStoreTest {
     fun testLoadMessages() = runTest(testDispatcher) {
         // Use backgroundScope for the store so that the LoadMessages collection is cancelled at the end of the test
         store = ChatStore(chatService, analyticsService, backgroundScope)
-
         val state = store.state.value
         assertTrue(state.messages.isEmpty())
 

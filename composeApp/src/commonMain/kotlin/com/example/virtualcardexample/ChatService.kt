@@ -69,7 +69,7 @@ class AwsChatService(
         // Simulate Lex Bot processing delay
         _isBotTyping.value = true
         delay(BOT_RESPONSE_DELAY_MS)
-        
+
         val botResponseText = lexRuntime.postText(content)
         _isBotTyping.value = false
 
