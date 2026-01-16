@@ -7,9 +7,6 @@ private const val MIN_PASSWORD_LENGTH = 6
 
 interface LoginService {
     suspend fun login(username: String, password: String): Result<Unit>
-    suspend fun loginWithGoogle(): Result<Unit>
-    suspend fun loginWithFacebook(): Result<Unit>
-    suspend fun loginWithApple(): Result<Unit>
 }
 
 class LoginServiceStub : LoginService {
@@ -21,20 +18,5 @@ class LoginServiceStub : LoginService {
         else {
             Result.failure(Exception("Invalid credentials"))
         }
-    }
-
-    override suspend fun loginWithGoogle(): Result<Unit> {
-        delay(LOGIN_DELAY_MS) // Simulate network delay
-        return Result.success(Unit)
-    }
-
-    override suspend fun loginWithFacebook(): Result<Unit> {
-        delay(LOGIN_DELAY_MS) // Simulate network delay
-        return Result.success(Unit)
-    }
-
-    override suspend fun loginWithApple(): Result<Unit> {
-        delay(LOGIN_DELAY_MS) // Simulate network delay
-        return Result.success(Unit)
     }
 }
