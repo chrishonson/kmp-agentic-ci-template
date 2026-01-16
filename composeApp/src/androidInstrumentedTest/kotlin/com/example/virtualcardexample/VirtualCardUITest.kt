@@ -2,11 +2,9 @@ package com.example.virtualcardexample
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import org.junit.Rule
 import org.junit.Test
 
@@ -16,38 +14,26 @@ class VirtualCardUITest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun testRevealButtonShowsDetails() {
-        // Start the app - MainActivity calls App() automatically
-        // composeTestRule.setContent { VirtualCardScreen() }
-        // Not needed if MainActivity sets it, but we can override or just verify what's on screen.
+    fun testValentineCardDisplaysCorrectly() {
+        // Verify the Valentine's Day card is displayed
+        composeTestRule.onNodeWithTag("ValentineCard").assertIsDisplayed()
 
-        // If we want to test VirtualCardScreen specifically in isolation we could use createComposeRule,
-        // but since we had issues, let's use the Activity rule.
-        // MainActivity calls App(), which calls VirtualCardScreen().
-        // So we don't need setContent unless we want to override.
+        // Verify the title
+        composeTestRule.onNodeWithTag("ValentineTitle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Happy Valentine's Day").assertIsDisplayed()
 
-        // Wait for the loading indicator to disappear, meaning details are loaded
-        // Wait for the loading indicator to disappear, meaning details are loaded
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodes(hasContentDescription("Loading")).fetchSemanticsNodes().isEmpty()
-        }
-        composeTestRule.onNode(hasContentDescription("Loading")).assertDoesNotExist()
+        // Verify the heart icon is displayed
+        composeTestRule.onNodeWithTag("HeartIcon").assertIsDisplayed()
 
-        // Check initial state (Hidden)
-        composeTestRule.onNodeWithTag("RevealButton").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("RevealButton").assertTextEquals("Reveal Details")
+        // Verify the recipient name
+        composeTestRule.onNodeWithTag("RecipientName").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Dear My Love,").assertIsDisplayed()
 
-        // Card Number should be masked, with the last 4 digits visible from the default mock data
-        composeTestRule.onNodeWithTag("CardNumber").assertTextEquals("**** **** **** 3456")
+        // Verify the message
+        composeTestRule.onNodeWithTag("ValentineMessage").assertIsDisplayed()
+        composeTestRule.onNodeWithText("You make my heart skip a beat!").assertIsDisplayed()
 
-        // Click Reveal
-        composeTestRule.onNodeWithTag("RevealButton").performClick()
-
-        // Check revealed state
-        composeTestRule.onNodeWithTag("RevealButton").assertTextEquals("Hide Details")
-        // The revealed card number should now be the full mock card number
-        composeTestRule.onNodeWithTag("CardNumber").assertTextEquals("1234 5678 9012 3456")
-        composeTestRule.onNodeWithText("12/28").assertIsDisplayed()
-        composeTestRule.onNodeWithText("123").assertIsDisplayed()
+        // Verify the closing text
+        composeTestRule.onNodeWithText("With Love").assertIsDisplayed()
     }
 }

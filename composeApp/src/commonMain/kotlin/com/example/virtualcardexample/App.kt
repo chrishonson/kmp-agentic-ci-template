@@ -1,195 +1,137 @@
 package com.example.virtualcardexample
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val CARD_WIDTH_FRACTION = 0.9f
-private const val CHIP_COLOR = 0xFFE0E0E0
+private const val VALENTINE_PINK = 0xFFE91E63
+private const val VALENTINE_LIGHT_PINK = 0xFFF8BBD9
 
 @Composable
 @Preview
 fun App() {
     MaterialTheme {
-        VirtualCardScreen()
+        ValentineCardScreen()
     }
 }
 
 @Composable
-fun VirtualCardScreen() {
-
-
+fun ValentineCardScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        ValentineCard(
+            recipientName = "My Love",
+            message = "You make my heart skip a beat!"
+        )
+    }
 }
 
 @Composable
-fun VirtualCard(
-    cardNumber: String,
-    cardHolder: String,
-    expiry: String,
-    cvv: String,
-    isLoading: Boolean,
-    isLocked: Boolean
+fun ValentineCard(
+    recipientName: String,
+    message: String
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth(CARD_WIDTH_FRACTION)
-            .height(220.dp)
-            .testTag("CreditCard"),
+            .height(280.dp)
+            .testTag("ValentineCard"),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background Gradient or Design
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = Brush.linearGradient(
+                        brush = Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.tertiary
+                                Color(0xFFE91E63),
+                                Color(0xFFF8BBD9)
                             )
                         )
                     )
             )
 
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.semantics { contentDescription = "Loading" }
-                    )
-                }
-            } else if (isLocked) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "CARD LOCKED",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Happy Valentine's Day",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.testTag("ValentineTitle")
+                )
+
+                Text(
+                    text = "\u2764",
+                    fontSize = 64.sp,
+                    modifier = Modifier.testTag("HeartIcon")
+                )
+
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Bank Name / Logo Placeholder
                     Text(
-                        text = "NeoBank",
-                        style = MaterialTheme.typography.titleLarge,
+                        text = "Dear $recipientName,",
+                        style = MaterialTheme.typography.titleMedium,
                         color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.testTag("RecipientName")
                     )
 
-                    // Chip
-                    Box(
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(35.dp)
-                            .background(
-                                color = Color(CHIP_COLOR),
-                                shape = RoundedCornerShape(4.dp)
-                            )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.testTag("ValentineMessage")
                     )
-
-                    // Card Details
-                    Column {
-                        Text(
-                            text = cardNumber,
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = Color.White,
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.testTag("CardNumber")
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "CARD HOLDER",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                                Text(
-                                    text = cardHolder,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                            }
-
-                            Column {
-                                Text(
-                                    text = "EXPIRES",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                                Text(
-                                    text = expiry,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                            }
-
-                             Column {
-                                Text(
-                                    text = "CVV",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                                Text(
-                                    text = cvv,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                    }
                 }
+
+                Text(
+                    text = "With Love",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Light
+                )
             }
         }
     }
