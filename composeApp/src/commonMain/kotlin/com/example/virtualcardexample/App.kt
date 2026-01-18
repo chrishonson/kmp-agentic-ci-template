@@ -34,9 +34,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 
+const val GREETING = "Hello from Night Shift Agent"
+
 private const val CARD_WIDTH_FRACTION = 0.9f
 private const val CHIP_COLOR = 0xFFE0E0E0
-const val GREETING = "Hello from Night Shift Agent"
 
 @Composable
 @Preview
