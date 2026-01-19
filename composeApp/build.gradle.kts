@@ -58,11 +58,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.example.virtualcardexample"
+    namespace = "com.example.exampleapp"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.virtualcardexample"
+        applicationId = "com.example.exampleapp"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -93,7 +93,7 @@ kover {
     reports {
         filters {
             includes {
-                classes("com.example.virtualcardexample.VirtualCardStore")
+                classes("com.example.exampleapp.AppStore")
             }
         }
         verify {

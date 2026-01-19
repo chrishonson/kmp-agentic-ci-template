@@ -1,4 +1,4 @@
-rootProject.name = "VirtualCardExample"
+rootProject.name = "ExampleApp"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

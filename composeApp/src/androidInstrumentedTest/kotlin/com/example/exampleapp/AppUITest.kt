@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -10,7 +10,7 @@ import androidx.compose.ui.test.performClick
 import org.junit.Rule
 import org.junit.Test
 
-class VirtualCardUITest {
+class AppUITest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
@@ -18,12 +18,12 @@ class VirtualCardUITest {
     @Test
     fun testRevealButtonShowsDetails() {
         // Start the app - MainActivity calls App() automatically
-        // composeTestRule.setContent { VirtualCardScreen() }
+        // composeTestRule.setContent { AppScreen() }
         // Not needed if MainActivity sets it, but we can override or just verify what's on screen.
 
-        // If we want to test VirtualCardScreen specifically in isolation we could use createComposeRule,
+        // If we want to test AppScreen specifically in isolation we could use createComposeRule,
         // but since we had issues, let's use the Activity rule.
-        // MainActivity calls App(), which calls VirtualCardScreen().
+        // MainActivity calls App(), which calls AppScreen().
         // So we don't need setContent unless we want to override.
 
         // Wait for the loading indicator to disappear, meaning details are loaded

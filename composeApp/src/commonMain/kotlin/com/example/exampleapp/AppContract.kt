@@ -1,6 +1,6 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
-data class VirtualCardState(
+data class AppState(
     val cardNumber: String = "**** **** **** 3456",
     val cardHolder: String = "Nick Antigravity",
     val expiry: String = "**/**",
@@ -12,11 +12,11 @@ data class VirtualCardState(
     val loadingMessage: String? = null
 )
 
-sealed interface VirtualCardIntent {
-    data object ToggleVisibility : VirtualCardIntent
-    data object ToggleLock : VirtualCardIntent
-    data object LoadCardDetails : VirtualCardIntent
-    data object ReplaceCard : VirtualCardIntent
+sealed interface AppIntent {
+    data object ToggleVisibility : AppIntent
+    data object ToggleLock : AppIntent
+    data object LoadCardDetails : AppIntent
+    data object ReplaceCard : AppIntent
 }
 
 // Data class to represent the fetched card details

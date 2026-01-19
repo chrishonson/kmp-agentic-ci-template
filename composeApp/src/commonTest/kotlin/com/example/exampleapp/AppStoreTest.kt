@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,7 +16,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class VirtualCardStoreTest {
+class AppStoreTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -81,7 +81,7 @@ class VirtualCardStoreTest {
 
     @Test
     fun testInitialState() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         testDispatcher.scheduler.runCurrent()
 
         assertTrue(store.state.value.isLoading)
@@ -105,7 +105,7 @@ class VirtualCardStoreTest {
 
     @Test
     fun testToggleVisibility() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         assertFalse(store.state.value.isRevealed)
@@ -113,7 +113,7 @@ class VirtualCardStoreTest {
         assertFalse(store.state.value.isLocked)
 
         // Toggle ON
-        store.dispatch(VirtualCardIntent.ToggleVisibility)
+        store.dispatch(AppIntent.ToggleVisibility)
 
         val revealedState = store.state.value
         assertTrue(revealedState.isRevealed)
@@ -125,7 +125,7 @@ class VirtualCardStoreTest {
         assertFalse(revealedState.isLocked)
 
         // Toggle OFF
-        store.dispatch(VirtualCardIntent.ToggleVisibility)
+        store.dispatch(AppIntent.ToggleVisibility)
 
         val hiddenState = store.state.value
         assertFalse(hiddenState.isRevealed)
@@ -137,17 +137,17 @@ class VirtualCardStoreTest {
 
     @Test
     fun testLoadCardDetails() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         // Simulate a revealed state before loading new details
-        store.dispatch(VirtualCardIntent.ToggleVisibility)
+        store.dispatch(AppIntent.ToggleVisibility)
         assertTrue(store.state.value.isRevealed)
         assertFalse(store.state.value.isLoading)
         assertFalse(store.state.value.isLocked)
 
         // Dispatch LoadCardDetails intent
-        store.dispatch(VirtualCardIntent.LoadCardDetails)
+        store.dispatch(AppIntent.LoadCardDetails)
 
         testDispatcher.scheduler.runCurrent() // Allow coroutine to start and update isLoading
         assertTrue(store.state.value.isLoading)
@@ -171,7 +171,7 @@ class VirtualCardStoreTest {
 
     @Test
     fun testLoadingStateDuringLoadCardDetails() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
 
         testDispatcher.scheduler.runCurrent()
         assertTrue(store.state.value.isLoading)
@@ -185,7 +185,7 @@ class VirtualCardStoreTest {
         assertFalse(store.state.value.isLoading) // Should be false after initial load
 
         // Dispatch LoadCardDetails again
-        store.dispatch(VirtualCardIntent.LoadCardDetails)
+        store.dispatch(AppIntent.LoadCardDetails)
 
         testDispatcher.scheduler.runCurrent() // Allow coroutine to start and update isLoading
         assertTrue(store.state.value.isLoading)
@@ -201,12 +201,12 @@ class VirtualCardStoreTest {
 
     @Test
     fun testToggleLock_lockCard_loadingState() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
         mockService.resetCalls() // Reset mock calls after initial load
 
         // Lock the card
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle() // Complete the lock operation including its delay
 
         val lockedState = store.state.value
@@ -219,18 +219,18 @@ class VirtualCardStoreTest {
 
     @Test
     fun testToggleLock_unlockCard_loadingState() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
         mockService.resetCalls() // Reset mock calls after initial load
 
         // Lock the card first, and wait for it to complete
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle()
         assertTrue(store.state.value.isLocked)
         mockService.resetCalls() // Reset mock calls after locking the card
 
         // Unlock the card
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle() // Complete the unlock operation including its delay
 
         val unlockedState = store.state.value
@@ -243,28 +243,28 @@ class VirtualCardStoreTest {
 
     @Test
     fun testToggleLock_thenToggleVisibility() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         // Lock the card
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle()
         assertTrue(store.state.value.isLocked)
 
         // Try to reveal details (should not work while locked)
-        store.dispatch(VirtualCardIntent.ToggleVisibility)
+        store.dispatch(AppIntent.ToggleVisibility)
         val stateAfterLockedVisibilityAttempt = store.state.value
         assertTrue(stateAfterLockedVisibilityAttempt.isLocked)
         assertFalse(stateAfterLockedVisibilityAttempt.isRevealed)
         assertEquals("Reveal Details", stateAfterLockedVisibilityAttempt.buttonText)
 
         // Unlock the card
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle()
         assertFalse(store.state.value.isLocked)
 
         // Now reveal details (should work)
-        store.dispatch(VirtualCardIntent.ToggleVisibility)
+        store.dispatch(AppIntent.ToggleVisibility)
         val stateAfterUnlockedVisibility = store.state.value
         assertFalse(stateAfterUnlockedVisibility.isLocked)
         assertTrue(stateAfterUnlockedVisibility.isRevealed)
@@ -274,11 +274,11 @@ class VirtualCardStoreTest {
 
     @Test
     fun testToggleLock_lockCard_finalState() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         // Lock the card
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle() // Complete the lock operation
 
         val lockedState = store.state.value
@@ -290,16 +290,16 @@ class VirtualCardStoreTest {
 
     @Test
     fun testToggleLock_unlockCard_finalState() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
 
         // Lock the card first
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle()
         assertTrue(store.state.value.isLocked)
 
         // Unlock the card
-        store.dispatch(VirtualCardIntent.ToggleLock)
+        store.dispatch(AppIntent.ToggleLock)
         advanceUntilIdle() // Complete the unlock operation
 
         val unlockedState = store.state.value
@@ -310,13 +310,13 @@ class VirtualCardStoreTest {
 
     @Test
     fun testReplaceCard() = runTest {
-        val store = VirtualCardStore(mockService)
+        val store = AppStore(mockService)
         advanceUntilIdle() // Complete initial loading
         mockService.resetCalls()
 
         val initialCardNumberLast4 = store.state.value.cardNumber.takeLast(4)
 
-        store.dispatch(VirtualCardIntent.ReplaceCard)
+        store.dispatch(AppIntent.ReplaceCard)
         testDispatcher.scheduler.runCurrent()
         assertTrue(store.state.value.isLoading)
         assertEquals("LOADING NEW CARD", store.state.value.loadingMessage)

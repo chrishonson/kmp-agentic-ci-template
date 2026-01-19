@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 // A simple analytics service interface
 interface AnalyticsService {

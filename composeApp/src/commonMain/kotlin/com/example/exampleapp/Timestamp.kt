@@ -1,3 +1,3 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 expect fun getCurrentTimestamp(): String

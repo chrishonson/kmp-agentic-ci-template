@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import androidx.compose.ui.window.ComposeUIViewController
 

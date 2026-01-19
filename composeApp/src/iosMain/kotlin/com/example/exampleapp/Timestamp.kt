@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter

@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,13 +41,13 @@ private const val CHIP_COLOR = 0xFFE0E0E0
 @Preview
 fun App() {
     MaterialTheme {
-        VirtualCardScreen()
+        AppScreen()
     }
 }
 
 @Composable
-fun VirtualCardScreen() {
-    val store = androidx.lifecycle.viewmodel.compose.viewModel { VirtualCardStore() }
+fun AppScreen() {
+    val store = androidx.lifecycle.viewmodel.compose.viewModel { AppStore() }
     val state by store.state.collectAsState()
 
     Column(
@@ -58,7 +58,7 @@ fun VirtualCardScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        VirtualCard(
+        AppCard(
             cardNumber = state.cardNumber,
             cardHolder = state.cardHolder,
             expiry = state.expiry,
@@ -70,7 +70,7 @@ fun VirtualCardScreen() {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { store.dispatch(VirtualCardIntent.ToggleVisibility) },
+            onClick = { store.dispatch(AppIntent.ToggleVisibility) },
             modifier = Modifier.testTag("RevealButton"),
             enabled = !state.isLocked && !state.isLoading
         ) {
@@ -80,7 +80,7 @@ fun VirtualCardScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { store.dispatch(VirtualCardIntent.ToggleLock) },
+            onClick = { store.dispatch(AppIntent.ToggleLock) },
             modifier = Modifier.testTag("LockCardButton"),
             enabled = !state.isLoading
         ) {
@@ -90,7 +90,7 @@ fun VirtualCardScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { store.dispatch(VirtualCardIntent.ReplaceCard) },
+            onClick = { store.dispatch(AppIntent.ReplaceCard) },
             modifier = Modifier.testTag("ReplaceCardButton"),
             enabled = !state.isLocked && !state.isLoading
         ) {
@@ -100,7 +100,7 @@ fun VirtualCardScreen() {
 }
 
 @Composable
-fun VirtualCard(
+fun AppCard(
     cardNumber: String,
     cardHolder: String,
     expiry: String,

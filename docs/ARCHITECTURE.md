@@ -6,17 +6,17 @@ This project follows a strict MVI architecture with a Reactive Store.
 
 ### 1. State (Model)
 - **Definition**: An immutable data class representing the single source of truth for the screen.
-- **Naming**: `[ScreenName]State` (e.g., `VirtualCardState`).
+- **Naming**: `[ScreenName]State` (e.g., `AppState`).
 - **Usage**: Must be a `data class`. All properties must be immutable (`val`).
 
 ### 2. Intent
 - **Definition**: A sealed interface representing all possible user actions or events.
-- **Naming**: `[ScreenName]Intent` (e.g., `VirtualCardIntent`).
+- **Naming**: `[ScreenName]Intent` (e.g., `AppIntent`).
 - **Usage**: Use `data object` for no-arg intents and `data class` for intents with parameters.
 
 ### 3. Store (ViewModel)
 - **Definition**: A `ViewModel` that holds the `StateFlow` and processes `Intents`.
-- **Naming**: `[ScreenName]Store` (e.g., `VirtualCardStore`).
+- **Naming**: `[ScreenName]Store` (e.g., `AppStore`).
 - **Responsibilities**:
     - Expose `val state: StateFlow<State>`.
     - Expose `fun dispatch(intent: Intent)`.
@@ -24,8 +24,8 @@ This project follows a strict MVI architecture with a Reactive Store.
 
 ### 4. UI (View)
 - **Definition**: Jetpack Compose functions.
-- **Container**: The "Screen" composable (e.g., `VirtualCardScreen`) holds the `Store`, collects state, and dispatches intents.
-- **Component**: The "Content" composable (e.g., `VirtualCard`) must be **Pure**. It takes raw data (Strings, Ints, Booleans) as arguments, NOT the State object or the Store.
+- **Container**: The "Screen" composable (e.g., `AppScreen`) holds the `Store`, collects state, and dispatches intents.
+- **Component**: The "Content" composable (e.g., `AppCard`) must be **Pure**. It takes raw data (Strings, Ints, Booleans) as arguments, NOT the State object or the Store.
 
 ## Testing Guidelines
 - **Unit Tests**: Test the `Store` using `kotlinx-coroutines-test`. Verify that dispatching an `Intent` results in the correct `State` transition.

@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

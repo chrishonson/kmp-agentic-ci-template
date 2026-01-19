@@ -66,9 +66,9 @@ python agent_gemini.py --project-dir ../kmp-agentic-ci-template
 This project follows **MVI (Model-View-Intent)** architecture. See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for details.
 
 ### Core Components
-- **State**: Immutable data class (`VirtualCardState`)
-- **Intent**: Sealed interface for user actions (`VirtualCardIntent`)
-- **Store**: ViewModel that processes intents (`VirtualCardStore`)
+- **State**: Immutable data class (`AppState`)
+- **Intent**: Sealed interface for user actions (`AppIntent`)
+- **Store**: ViewModel that processes intents (`AppStore`)
 - **UI**: Pure Compose functions
 
 ---

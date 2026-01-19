@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.exampleapp
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,33 +10,33 @@ import kotlinx.coroutines.launch
 
 private const val MASKED_CARD_SUFFIX_LENGTH = 4
 
-class VirtualCardStore(
+class AppStore(
     private val cardDetailsService: CardDetailsService = CardDetailsService(),
     private val analyticsService: AnalyticsService = MockAnalyticsService()
 ) : ViewModel() {
 
     private val analyticsMiddleware: AnalyticsMiddleware = AnalyticsMiddleware(analyticsService)
 
-    private val _state = MutableStateFlow(VirtualCardState())
-    val state: StateFlow<VirtualCardState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(AppState())
+    val state: StateFlow<AppState> = _state.asStateFlow()
 
     private var _cachedCardDetails: CardDetails? = null
 
     init {
-        dispatch(VirtualCardIntent.LoadCardDetails)
+        dispatch(AppIntent.LoadCardDetails)
     }
 
-    fun dispatch(intent: VirtualCardIntent) {
+    fun dispatch(intent: AppIntent) {
         analyticsMiddleware.logEvent(intent, _state.value)
         when (intent) {
-            VirtualCardIntent.ToggleVisibility -> {
+            AppIntent.ToggleVisibility -> {
                 toggleVisibility()
             }
-            VirtualCardIntent.LoadCardDetails -> loadCardDetails()
-            VirtualCardIntent.ToggleLock -> {
+            AppIntent.LoadCardDetails -> loadCardDetails()
+            AppIntent.ToggleLock -> {
                 toggleLock()
             }
-            VirtualCardIntent.ReplaceCard -> {
+            AppIntent.ReplaceCard -> {
                 replaceCard()
             }
         }
