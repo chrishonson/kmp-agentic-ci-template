@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,13 +43,33 @@ private val PADDING_16 = 16.dp
 private val PADDING_8 = 8.dp
 private val PADDING_24 = 24.dp
 private val SPACING_32 = 32.dp
+private val SPACING_16 = 16.dp
 private val SPACING_8 = 8.dp
 private val FONT_SIZE_20 = 20.sp
 
-@Composable
+ @Composable
 fun ValentineCardScreen(store: ValentineCardStore) {
     val state by store.state.collectAsState()
 
+    ValentineCardContent(
+        recipientName = state.recipientName,
+        message = state.message,
+        isRevealed = state.isRevealed,
+        onNameChange = { store.dispatch(ValentineCardIntent.UpdateRecipientName(it)) },
+        onReveal = { store.dispatch(ValentineCardIntent.RevealMessage) },
+        onNextMessage = { store.dispatch(ValentineCardIntent.NextMessage) }
+    )
+}
+
+ @Composable
+fun ValentineCardContent(
+    recipientName: String,
+    message: String,
+    isRevealed: Boolean,
+    onNameChange: (String) -> Unit,
+    onReveal: () -> Unit,
+    onNextMessage: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -67,45 +90,85 @@ fun ValentineCardScreen(store: ValentineCardStore) {
             Spacer(modifier = Modifier.height(SPACING_32))
 
             AnimatedVisibility(
-                visible = !state.isRevealed,
+                visible = !isRevealed,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                Button(
-                    onClick = { store.dispatch(ValentineCardIntent.RevealMessage) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PRIMARY_PINK
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    OutlinedTextField(
+                        value = recipientName,
+                        onValueChange = onNameChange,
+                        label = { Text("Who is it for?") },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = PADDING_8),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PRIMARY_PINK,
+                            focusedLabelColor = PRIMARY_PINK
+                        )
                     )
-                ) {
-                    Icon(Icons.Default.Favorite, contentDescription = null)
-                    Spacer(Modifier.width(SPACING_8))
-                    Text("Reveal Message")
+
+                    Spacer(modifier = Modifier.height(SPACING_16))
+
+                    Button(
+                        onClick = onReveal,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PRIMARY_PINK
+                        )
+                    ) {
+                        Icon(Icons.Default.Favorite, contentDescription = null)
+                        Spacer(Modifier.width(SPACING_8))
+                        Text("Reveal Message")
+                    }
                 }
             }
 
             AnimatedVisibility(
-                visible = state.isRevealed,
+                visible = isRevealed,
                 enter = fadeIn() + expandVertically()
             ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(PADDING_8),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SECONDARY_PINK
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(PADDING_24),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (recipientName.isNotBlank()) {
                         Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "To: $recipientName",
+                            style = MaterialTheme.typography.titleLarge,
                             color = DARK_PINK,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = FONT_SIZE_20
+                            fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(SPACING_8))
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(PADDING_8),
+                        colors = CardDefaults.cardColors(
+                            containerColor = SECONDARY_PINK
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(PADDING_24),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = DARK_PINK,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = FONT_SIZE_20
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(SPACING_16))
+
+                    Button(
+                        onClick = onNextMessage,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PRIMARY_PINK
+                        )
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = null)
+                        Spacer(Modifier.width(SPACING_8))
+                        Text("Another One!")
                     }
                 }
             }

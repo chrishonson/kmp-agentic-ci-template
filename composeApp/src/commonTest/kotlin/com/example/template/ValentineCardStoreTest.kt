@@ -8,26 +8,37 @@ import kotlin.test.assertTrue
 class ValentineCardStoreTest {
 
     @Test
-    fun `initial state is correct`() {
+    fun `initial state is hidden`() {
         val store = ValentineCardStore()
-        val state = store.state.value
-        assertEquals("My Love", state.recipientName)
-        assertEquals("Happy Valentine's Day!", state.message)
-        assertFalse(state.isOpened)
+        assertFalse(store.state.value.isRevealed)
+        assertEquals("", store.state.value.message)
+        assertEquals("", store.state.value.recipientName)
     }
 
     @Test
-    fun `OpenCard intent updates isOpened to true`() {
+    fun `updating recipient name updates state`() {
         val store = ValentineCardStore()
-        store.dispatch(ValentineCardIntent.OpenCard)
-        assertTrue(store.state.value.isOpened)
+        store.dispatch(ValentineCardIntent.UpdateRecipientName("Alice"))
+        assertEquals("Alice", store.state.value.recipientName)
     }
 
     @Test
-    fun `UpdateRecipient intent updates recipientName`() {
+    fun `revealing message updates state`() {
         val store = ValentineCardStore()
-        val newName = "Dearest"
-        store.dispatch(ValentineCardIntent.UpdateRecipient(newName))
-        assertEquals(newName, store.state.value.recipientName)
+        store.dispatch(ValentineCardIntent.RevealMessage)
+        assertTrue(store.state.value.isRevealed)
+        assertTrue(store.state.value.message.isNotEmpty())
+    }
+
+    @Test
+    fun `cycling next message updates message`() {
+        val store = ValentineCardStore()
+        store.dispatch(ValentineCardIntent.RevealMessage)
+        val firstMessage = store.state.value.message
+        
+        store.dispatch(ValentineCardIntent.NextMessage)
+        val secondMessage = store.state.value.message
+        
+        assertTrue(firstMessage != secondMessage)
     }
 }
