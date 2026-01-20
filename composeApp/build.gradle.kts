@@ -91,11 +91,6 @@ dependencies {
 
 kover {
     reports {
-        filters {
-            includes {
-                classes("com.example.template.ValentineCardStore")
-            }
-        }
         verify {
             rule {
                 minBound(80)
