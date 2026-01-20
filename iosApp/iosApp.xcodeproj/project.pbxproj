@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		A16ED3742637E5AC8B3BBEDE /* VirtualCardExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualCardExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A16ED3742637E5AC8B3BBEDE /* TemplateApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TemplateApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -59,7 +59,7 @@
 		A0C83A393EA34D15A8686F4E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A16ED3742637E5AC8B3BBEDE /* VirtualCardExample.app */,
+				A16ED3742637E5AC8B3BBEDE /* TemplateApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,7 +87,7 @@
 			packageProductDependencies = (
 			);
 			productName = iosApp;
-			productReference = A16ED3742637E5AC8B3BBEDE /* VirtualCardExample.app */;
+			productReference = A16ED3742637E5AC8B3BBEDE /* TemplateApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

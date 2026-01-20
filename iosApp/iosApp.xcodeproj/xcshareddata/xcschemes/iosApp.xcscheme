@@ -14,7 +14,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "F349220A4B230D40BA1DE444"
-               BuildableName = "VirtualCardExample.app"
+               BuildableName = "TemplateApp.app"
                BlueprintName = "iosApp"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
@@ -43,7 +43,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F349220A4B230D40BA1DE444"
-            BuildableName = "VirtualCardExample.app"
+            BuildableName = "TemplateApp.app"
             BlueprintName = "iosApp"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
