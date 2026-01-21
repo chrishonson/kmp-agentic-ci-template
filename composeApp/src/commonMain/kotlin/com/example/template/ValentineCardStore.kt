@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.random.Random
 
 class ValentineCardStore : ViewModel() {
     private val messages = listOf(
@@ -22,6 +23,10 @@ class ValentineCardStore : ViewModel() {
     private val _state = MutableStateFlow(ValentineCardState())
     val state: StateFlow<ValentineCardState> = _state.asStateFlow()
 
+    private fun randomBackground(): ValentineBackground {
+        return ValentineBackground.entries[Random.nextInt(ValentineBackground.entries.size)]
+    }
+
     fun dispatch(intent: ValentineCardIntent) {
         when (intent) {
             is ValentineCardIntent.UpdateRecipientName -> {
@@ -31,13 +36,19 @@ class ValentineCardStore : ViewModel() {
                 _state.update {
                     it.copy(
                         message = messages[currentMessageIndex],
-                        isRevealed = true
+                        isRevealed = true,
+                        background = randomBackground()
                     )
                 }
             }
             ValentineCardIntent.NextMessage -> {
                 currentMessageIndex = (currentMessageIndex + 1) % messages.size
-                _state.update { it.copy(message = messages[currentMessageIndex]) }
+                _state.update {
+                    it.copy(
+                        message = messages[currentMessageIndex],
+                        background = randomBackground()
+                    )
+                }
             }
         }
     }
