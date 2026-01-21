@@ -35,7 +35,9 @@ kotlin {
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
+            implementation(compose.material)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -58,11 +60,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.example.virtualcardexample"
+    namespace = "com.example.template"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.virtualcardexample"
+        applicationId = "com.example.template"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -91,11 +93,6 @@ dependencies {
 
 kover {
     reports {
-        filters {
-            includes {
-                classes("com.example.virtualcardexample.VirtualCardStore")
-            }
-        }
         verify {
             rule {
                 minBound(80)

@@ -1,5 +1,5 @@
 
-package com.example.virtualcardexample
+package com.example.template
 
 import kotlinx.coroutines.flow.StateFlow
 

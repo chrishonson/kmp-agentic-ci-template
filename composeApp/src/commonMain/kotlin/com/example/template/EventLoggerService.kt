@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.template
 
 interface EventLoggerService {
     fun logEvent(eventName: String, params: Map<String, String>? = null)

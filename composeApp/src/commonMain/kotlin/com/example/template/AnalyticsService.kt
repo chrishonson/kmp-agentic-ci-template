@@ -1,4 +1,8 @@
-package com.example.virtualcardexample
+package com.example.template
+
+interface AnalyticsService {
+    fun logEvent(eventName: String, params: Map<String, String>)
+}
 
 class MockAnalyticsService : AnalyticsService {
     override fun logEvent(eventName: String, params: Map<String, String>) {

@@ -1,4 +1,4 @@
-package com.example.virtualcardexample
+package com.example.template
 
 import java.text.SimpleDateFormat
 import java.util.Date
