@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -73,7 +74,7 @@ fun StartupContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DARK_BACKGROUND_COLOR),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -82,7 +83,7 @@ fun StartupContent(
             modifier = Modifier
                 .size(ICON_SIZE_DP.dp)
                 .scale(scale),
-            tint = HEART_PINK_COLOR
+            tint = MaterialTheme.colorScheme.primary
         )
     }
 }
