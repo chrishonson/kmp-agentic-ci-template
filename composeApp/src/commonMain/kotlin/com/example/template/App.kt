@@ -11,16 +11,18 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  @Composable
  @Preview
 fun App() {
-    var showStartup by remember { mutableStateOf(true) }
+    ValentineTheme {
+        var showStartup by remember { mutableStateOf(true) }
 
-    if (showStartup) {
-        val store: StartupStore = viewModel { StartupStore() }
-        StartupScreen(
-            store = store,
-            onFinished = { showStartup = false }
-        )
-    } else {
-        val valentineStore: ValentineCardStore = viewModel { ValentineCardStore() }
-        ValentineCardScreen(store = valentineStore)
+        if (showStartup) {
+            val store: StartupStore = viewModel { StartupStore() }
+            StartupScreen(
+                store = store,
+                onFinished = { showStartup = false }
+            )
+        } else {
+            val valentineStore: ValentineCardStore = viewModel { ValentineCardStore() }
+            ValentineCardScreen(store = valentineStore)
+        }
     }
 }
