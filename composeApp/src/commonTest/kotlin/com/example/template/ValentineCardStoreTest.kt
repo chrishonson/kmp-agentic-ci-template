@@ -35,10 +35,10 @@ class ValentineCardStoreTest {
         val store = ValentineCardStore()
         store.dispatch(ValentineCardIntent.RevealMessage)
         val firstMessage = store.state.value.message
-        
+
         store.dispatch(ValentineCardIntent.NextMessage)
         val secondMessage = store.state.value.message
-        
+
         assertTrue(firstMessage != secondMessage)
     }
 }
