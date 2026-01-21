@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,14 +32,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val PRIMARY_PINK = Color(0xFFE91E63)
-private val SECONDARY_PINK = Color(0xFFFCE4EC)
-private val DARK_PINK = Color(0xFF880E4F)
 private val PADDING_16 = 16.dp
 private val PADDING_8 = 8.dp
 private val PADDING_24 = 24.dp
@@ -47,7 +44,7 @@ private val SPACING_16 = 16.dp
 private val SPACING_8 = 8.dp
 private val FONT_SIZE_20 = 20.sp
 
- @Composable
+@Composable
 fun ValentineCardScreen(store: ValentineCardStore) {
     val state by store.state.collectAsState()
 
@@ -61,7 +58,7 @@ fun ValentineCardScreen(store: ValentineCardStore) {
     )
 }
 
- @Composable
+@Composable
 fun ValentineCardContent(
     recipientName: String,
     message: String,
@@ -73,6 +70,7 @@ fun ValentineCardContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(PADDING_16),
         contentAlignment = Alignment.Center
     ) {
@@ -84,7 +82,7 @@ fun ValentineCardContent(
                 text = "Happy Valentine's Day!",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = PRIMARY_PINK
+                color = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(SPACING_32))
@@ -101,8 +99,8 @@ fun ValentineCardContent(
                         label = { Text("Who is it for?") },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = PADDING_8),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PRIMARY_PINK,
-                            focusedLabelColor = PRIMARY_PINK
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
@@ -111,7 +109,7 @@ fun ValentineCardContent(
                     Button(
                         onClick = onReveal,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PRIMARY_PINK
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Icon(Icons.Default.Favorite, contentDescription = null)
@@ -130,7 +128,7 @@ fun ValentineCardContent(
                         Text(
                             text = "To: $recipientName",
                             style = MaterialTheme.typography.titleLarge,
-                            color = DARK_PINK,
+                            color = MaterialTheme.colorScheme.tertiary,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(SPACING_8))
@@ -141,7 +139,7 @@ fun ValentineCardContent(
                             .fillMaxWidth()
                             .padding(PADDING_8),
                         colors = CardDefaults.cardColors(
-                            containerColor = SECONDARY_PINK
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
                         )
                     ) {
                         Column(
@@ -151,7 +149,7 @@ fun ValentineCardContent(
                             Text(
                                 text = message,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = DARK_PINK,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = FONT_SIZE_20
                             )
@@ -163,7 +161,7 @@ fun ValentineCardContent(
                     Button(
                         onClick = onNextMessage,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PRIMARY_PINK
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
