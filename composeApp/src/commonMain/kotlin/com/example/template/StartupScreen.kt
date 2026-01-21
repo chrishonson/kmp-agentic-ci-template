@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -20,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
@@ -29,10 +29,8 @@ private const val HEART_BEAT_DURATION_MS = 500
 private const val INITIAL_SCALE = 1f
 private const val TARGET_SCALE = 1.2f
 private const val ICON_SIZE_DP = 120
-private val DARK_BACKGROUND_COLOR = Color(0xFF121212)
-private val HEART_PINK_COLOR = Color(0xFFE91E63)
 
- @Composable
+@Composable
 fun StartupScreen(
     store: StartupStore,
     onFinished: () -> Unit
@@ -50,7 +48,7 @@ fun StartupScreen(
     )
 }
 
- @Composable
+@Composable
 fun StartupContent(
     onAnimationFinished: () -> Unit
 ) {
@@ -73,7 +71,7 @@ fun StartupContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DARK_BACKGROUND_COLOR),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -82,7 +80,7 @@ fun StartupContent(
             modifier = Modifier
                 .size(ICON_SIZE_DP.dp)
                 .scale(scale),
-            tint = HEART_PINK_COLOR
+            tint = MaterialTheme.colorScheme.primary
         )
     }
 }
