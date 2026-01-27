@@ -1,44 +1,51 @@
 package com.example.template
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class ValentineCardStoreTest {
 
     @Test
-    fun `initial state is hidden`() {
-        val store = ValentineCardStore()
-        assertFalse(store.state.value.isRevealed)
-        assertEquals("", store.state.value.message)
-        assertEquals("", store.state.value.recipientName)
+    fun `initial state uses first message and defaults`() {
+        val messages = listOf("Hello", "Love")
+        val store = ValentineCardStore(messages)
+        val state = store.state.value
+
+        assertEquals("", state.recipientName)
+        assertEquals(messages.first(), state.message)
+        assertFalse(state.isRevealed)
+        assertEquals(ValentineBackground.HEARTS_FLOATING, state.background)
     }
 
     @Test
-    fun `updating recipient name updates state`() {
-        val store = ValentineCardStore()
-        store.dispatch(ValentineCardIntent.UpdateRecipientName("Alice"))
-        assertEquals("Alice", store.state.value.recipientName)
+    fun `update recipient name updates state`() {
+        val store = ValentineCardStore(listOf("Hello"))
+
+        store.dispatch(ValentineCardIntent.UpdateRecipientName("Taylor"))
+
+        assertEquals("Taylor", store.state.value.recipientName)
     }
 
     @Test
-    fun `revealing message updates state`() {
-        val store = ValentineCardStore()
+    fun `reveal message marks state as revealed`() {
+        val store = ValentineCardStore(listOf("Hello"))
+
         store.dispatch(ValentineCardIntent.RevealMessage)
+
         assertTrue(store.state.value.isRevealed)
-        assertTrue(store.state.value.message.isNotEmpty())
     }
 
     @Test
-    fun `cycling next message updates message`() {
-        val store = ValentineCardStore()
-        store.dispatch(ValentineCardIntent.RevealMessage)
-        val firstMessage = store.state.value.message
+    fun `next message cycles through messages`() {
+        val messages = listOf("Hello", "Love")
+        val store = ValentineCardStore(messages)
 
         store.dispatch(ValentineCardIntent.NextMessage)
-        val secondMessage = store.state.value.message
+        assertEquals("Love", store.state.value.message)
 
-        assertTrue(firstMessage != secondMessage)
+        store.dispatch(ValentineCardIntent.NextMessage)
+        assertEquals("Hello", store.state.value.message)
     }
 }
