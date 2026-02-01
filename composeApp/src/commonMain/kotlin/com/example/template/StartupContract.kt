@@ -1,12 +1,14 @@
 package com.example.template
 
-import androidx.compose.runtime.Immutable
-
-@Immutable
-data class StartupState(
-    val isFinished: Boolean = false
-)
-
 sealed interface StartupIntent {
+    data object Initialize : StartupIntent
+    data object Retry : StartupIntent
     data object AnimationFinished : StartupIntent
 }
+
+data class StartupState(
+    val isLoading: Boolean = false,
+    val isCompleted: Boolean = false,
+    val isFinished: Boolean = false,
+    val error: String? = null
+)

@@ -11,12 +11,16 @@ private val defaultMessages = listOf(
 )
 
 class ValentineCardStore(
-    messages: List<String> = defaultMessages
+    messages: List<String> = defaultMessages,
+    background: ValentineBackground = ValentineBackground.HEARTS_FLOATING
 ) : ViewModel() {
     private val messageCycle = if (messages.isNotEmpty()) messages else defaultMessages
     private var currentMessageIndex = 0
     private val _state = MutableStateFlow(
-        ValentineCardState(message = messageCycle.first())
+        ValentineCardState(
+        message = messageCycle.first(),
+        background = background
+    )
     )
     val state: StateFlow<ValentineCardState> = _state
 

@@ -1,51 +1,86 @@
 package com.example.template
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
+ @OptIn(ExperimentalCoroutinesApi::class)
 class ValentineCardStoreTest {
+    private val testDispatcher = StandardTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
-    fun `initial state uses first message and defaults`() {
-        val messages = listOf("Hello", "Love")
-        val store = ValentineCardStore(messages)
+    fun testInitialState() = runTest {
+        val store = ValentineCardStore()
         val state = store.state.value
-
         assertEquals("", state.recipientName)
-        assertEquals(messages.first(), state.message)
         assertFalse(state.isRevealed)
+        assertTrue(state.message.isNotEmpty())
         assertEquals(ValentineBackground.HEARTS_FLOATING, state.background)
     }
 
     @Test
-    fun `update recipient name updates state`() {
-        val store = ValentineCardStore(listOf("Hello"))
-
-        store.dispatch(ValentineCardIntent.UpdateRecipientName("Taylor"))
-
-        assertEquals("Taylor", store.state.value.recipientName)
+    fun testCustomBackgroundInitialization() = runTest {
+        val store = ValentineCardStore(background = ValentineBackground.ROMANTIC_SUNSET)
+        assertEquals(ValentineBackground.ROMANTIC_SUNSET, store.state.value.background)
     }
 
     @Test
-    fun `reveal message marks state as revealed`() {
-        val store = ValentineCardStore(listOf("Hello"))
+    fun testUpdateRecipientName() = runTest {
+        val store = ValentineCardStore()
+        store.dispatch(ValentineCardIntent.UpdateRecipientName("John"))
+        assertEquals("John", store.state.value.recipientName)
+    }
 
+    @Test
+    fun testRevealMessage() = runTest {
+        val store = ValentineCardStore()
+        assertFalse(store.state.value.isRevealed)
         store.dispatch(ValentineCardIntent.RevealMessage)
-
         assertTrue(store.state.value.isRevealed)
     }
 
     @Test
-    fun `next message cycles through messages`() {
-        val messages = listOf("Hello", "Love")
-        val store = ValentineCardStore(messages)
-
+    fun testNextMessage() = runTest {
+        val messages = listOf("Msg 1", "Msg 2")
+        val store = ValentineCardStore(messages = messages)
+        assertEquals("Msg 1", store.state.value.message)
         store.dispatch(ValentineCardIntent.NextMessage)
-        assertEquals("Love", store.state.value.message)
-
+        assertEquals("Msg 2", store.state.value.message)
         store.dispatch(ValentineCardIntent.NextMessage)
-        assertEquals("Hello", store.state.value.message)
+        assertEquals("Msg 1", store.state.value.message)
+    }
+
+    @Test
+    fun testEmptyMessagesFallback() = runTest {
+        val store = ValentineCardStore(messages = emptyList())
+        assertTrue(store.state.value.message.isNotEmpty())
+    }
+
+    @Test
+    fun testSingleMessageList() = runTest {
+        val messages = listOf("Only Message")
+        val store = ValentineCardStore(messages = messages)
+        assertEquals("Only Message", store.state.value.message)
+        store.dispatch(ValentineCardIntent.NextMessage)
+        assertEquals("Only Message", store.state.value.message)
     }
 }

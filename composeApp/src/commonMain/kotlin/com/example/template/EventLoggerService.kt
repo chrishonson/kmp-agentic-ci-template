@@ -9,3 +9,9 @@ class ConsoleEventLoggerService : EventLoggerService {
         println("Analytics Event: $eventName, Params: $params")
     }
 }
+
+class CompositeEventLoggerService(private val loggers: List<EventLoggerService>) : EventLoggerService {
+    override fun logEvent(eventName: String, params: Map<String, String>?) {
+        loggers.forEach { it.logEvent(eventName, params) }
+    }
+}
