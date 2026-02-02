@@ -3,52 +3,38 @@ package com.example.template
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlin.random.Random
 
-class ValentineCardStore : ViewModel() {
-    private val messages = listOf(
-        "You are the CSS to my HTML!",
-        "You're the 'git push' to my 'git commit'.",
-        "My heart is a repository, and you have write access.",
-        "You are the semicolon to my statements; without you, everything fails.",
-        "I love you more than I love bug-free code.",
-        "You're the top result in my Google search for happiness.",
-        "My love for you is like an infinite loop, but with a base case: Forever."
-    )
+private val defaultMessages = listOf(
+    "You make every day feel special.",
+    "Happy Valentine's Day!",
+    "You are my favorite hello."
+)
 
+class ValentineCardStore(
+    messages: List<String> = defaultMessages,
+    background: ValentineBackground = ValentineBackground.HEARTS_FLOATING
+) : ViewModel() {
+    private val messageCycle = if (messages.isNotEmpty()) messages else defaultMessages
     private var currentMessageIndex = 0
-
-    private val _state = MutableStateFlow(ValentineCardState())
-    val state: StateFlow<ValentineCardState> = _state.asStateFlow()
-
-    private fun randomBackground(): ValentineBackground {
-        return ValentineBackground.entries[Random.nextInt(ValentineBackground.entries.size)]
-    }
+    private val _state = MutableStateFlow(
+        ValentineCardState(
+        message = messageCycle.first(),
+        background = background
+    )
+    )
+    val state: StateFlow<ValentineCardState> = _state
 
     fun dispatch(intent: ValentineCardIntent) {
         when (intent) {
             is ValentineCardIntent.UpdateRecipientName -> {
-                _state.update { it.copy(recipientName = intent.name) }
+                _state.value = _state.value.copy(recipientName = intent.name)
             }
             ValentineCardIntent.RevealMessage -> {
-                _state.update {
-                    it.copy(
-                        message = messages[currentMessageIndex],
-                        isRevealed = true,
-                        background = randomBackground()
-                    )
-                }
+                _state.value = _state.value.copy(isRevealed = true)
             }
             ValentineCardIntent.NextMessage -> {
-                currentMessageIndex = (currentMessageIndex + 1) % messages.size
-                _state.update {
-                    it.copy(
-                        message = messages[currentMessageIndex],
-                        background = randomBackground()
-                    )
-                }
+                currentMessageIndex = (currentMessageIndex + 1) % messageCycle.size
+                _state.value = _state.value.copy(message = messageCycle[currentMessageIndex])
             }
         }
     }
