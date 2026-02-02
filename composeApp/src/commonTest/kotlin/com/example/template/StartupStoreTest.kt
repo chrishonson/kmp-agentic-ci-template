@@ -60,7 +60,6 @@ class StartupStoreTest {
     @Test
     fun testRetryIntent() = runTest {
         val store = StartupStore()
-        // Trigger initial failure simulation if we had one, but here we just test it runs init
         store.dispatch(StartupIntent.Retry)
 
         assertTrue(store.state.value.isLoading)

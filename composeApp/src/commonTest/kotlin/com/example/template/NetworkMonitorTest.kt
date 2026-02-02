@@ -1,6 +1,7 @@
 package com.example.template
 
 import kotlin.test.Test
+
 import kotlin.test.assertTrue
 
 class NetworkMonitorTest {

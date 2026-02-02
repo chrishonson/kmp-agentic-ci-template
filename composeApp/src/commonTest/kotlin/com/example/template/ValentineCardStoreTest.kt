@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
- @OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class ValentineCardStoreTest {
     private val testDispatcher = StandardTestDispatcher()
 
@@ -82,5 +82,19 @@ class ValentineCardStoreTest {
         assertEquals("Only Message", store.state.value.message)
         store.dispatch(ValentineCardIntent.NextMessage)
         assertEquals("Only Message", store.state.value.message)
+    }
+
+    @Test
+    fun testUpdateRecipientNamePreservesOtherState() = runTest {
+        val store = ValentineCardStore()
+        store.dispatch(ValentineCardIntent.RevealMessage)
+        val background = store.state.value.background
+        val message = store.state.value.message
+        store.dispatch(ValentineCardIntent.UpdateRecipientName("Alice"))
+        val state = store.state.value
+        assertEquals("Alice", state.recipientName)
+        assertTrue(state.isRevealed)
+        assertEquals(background, state.background)
+        assertEquals(message, state.message)
     }
 }
