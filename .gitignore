@@ -34,3 +34,4 @@ env/
 tasks.txt
 .agent_logs/
 .gemini/
+kotlin-js-store/

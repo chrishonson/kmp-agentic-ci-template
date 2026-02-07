@@ -26,6 +26,23 @@ kotlin {
             isStatic = true
         }
     }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        // moduleName = "composeApp"
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+                devServer = (devServer ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer()).apply {
+                    static = (static ?: mutableListOf()).apply {
+                        // Serve sources to allow debugging
+                        add(project.projectDir.path)
+                    }
+                }
+            }
+        }
+        binaries.executable()
+    }
     
     sourceSets {
         androidMain.dependencies {
