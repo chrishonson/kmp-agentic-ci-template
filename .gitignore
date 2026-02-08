@@ -34,3 +34,4 @@ env/
 
 .agent_logs/
 .gemini/
+kotlin-js-store/
