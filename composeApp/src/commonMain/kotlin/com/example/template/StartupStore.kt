@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class StartupStore : ViewModel() {
+class StartupStore(private val postService: PostService) : ViewModel() {
     private val _state = MutableStateFlow(StartupState())
     val state: StateFlow<StartupState> = _state.asStateFlow()
 
@@ -31,12 +31,18 @@ class StartupStore : ViewModel() {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun performInitialization() {
         _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
-            // Simulate initialization work
-            delay(INITIALIZATION_DELAY_MS)
-            _state.update { it.copy(isLoading = false, isCompleted = true) }
+            try {
+                // Simulate initialization work
+                delay(INITIALIZATION_DELAY_MS)
+                val post = postService.fetchPost(1)
+                _state.update { it.copy(isLoading = false, isCompleted = true, post = post) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, error = e.message ?: "Unknown error") }
+            }
         }
     }
 }

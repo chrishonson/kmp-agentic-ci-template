@@ -10,5 +10,6 @@ data class StartupState(
     val isLoading: Boolean = false,
     val isCompleted: Boolean = false,
     val isFinished: Boolean = false,
+    val post: Post? = null,
     val error: String? = null
 )
