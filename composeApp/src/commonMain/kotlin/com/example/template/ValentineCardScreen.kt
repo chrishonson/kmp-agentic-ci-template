@@ -1,10 +1,5 @@
 package com.example.template
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -87,11 +82,8 @@ fun ValentineCardContent(
 
             Spacer(modifier = Modifier.height(SPACING_32))
 
-            AnimatedVisibility(
-                visible = !isRevealed,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
+            // Simple conditional instead of animation to avoid WASM layout bug
+            if (!isRevealed) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     OutlinedTextField(
                         value = recipientName,
@@ -117,12 +109,7 @@ fun ValentineCardContent(
                         Text("Reveal Message")
                     }
                 }
-            }
-
-            AnimatedVisibility(
-                visible = isRevealed,
-                enter = fadeIn() + expandVertically()
-            ) {
+            } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (recipientName.isNotBlank()) {
                         Text(
