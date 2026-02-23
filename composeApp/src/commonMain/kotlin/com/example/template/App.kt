@@ -8,14 +8,16 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
- @Composable
- @Preview
+@Composable
+@Preview
 fun App() {
     ValentineTheme {
         var showStartup by remember { mutableStateOf(true) }
 
         if (showStartup) {
-            val store: StartupStore = viewModel { StartupStore() }
+            val store: StartupStore = viewModel {
+                StartupStore(StartupActionCreator(providePostService()))
+            }
             StartupScreen(
                 store = store,
                 onFinished = { showStartup = false }

@@ -1,1 +1,1 @@
-[x] add an example network call
+[x] clean up any test, coverage or detekt issues
