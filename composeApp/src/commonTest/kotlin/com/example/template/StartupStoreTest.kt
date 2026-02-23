@@ -13,6 +13,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MockPostService : PostService {
@@ -30,7 +31,55 @@ class MockPostService : PostService {
     }
 }
 
- @OptIn(ExperimentalCoroutinesApi::class)
+// -- Reducer Tests: Pure, no coroutines needed --
+
+class StartupReducerTest {
+
+    @Test
+    fun loadingStartedSetsIsLoading() {
+        val state = StartupState()
+        val result = startupReducer(state, StartupAction.LoadingStarted)
+        assertTrue(result.isLoading)
+        assertNull(result.error)
+    }
+
+    @Test
+    fun loadingStartedClearsError() {
+        val state = StartupState(error = "Previous error")
+        val result = startupReducer(state, StartupAction.LoadingStarted)
+        assertTrue(result.isLoading)
+        assertNull(result.error)
+    }
+
+    @Test
+    fun loadingSucceededSetsPost() {
+        val post = Post(1, 1, "Title", "Body")
+        val state = StartupState(isLoading = true)
+        val result = startupReducer(state, StartupAction.LoadingSucceeded(post))
+        assertFalse(result.isLoading)
+        assertTrue(result.isCompleted)
+        assertEquals(post, result.post)
+    }
+
+    @Test
+    fun loadingFailedSetsError() {
+        val state = StartupState(isLoading = true)
+        val result = startupReducer(state, StartupAction.LoadingFailed("Network error"))
+        assertFalse(result.isLoading)
+        assertEquals("Network error", result.error)
+    }
+
+    @Test
+    fun animationFinishedSetsIsFinished() {
+        val state = StartupState()
+        val result = startupReducer(state, StartupAction.AnimationFinished)
+        assertTrue(result.isFinished)
+    }
+}
+
+// -- Integration Tests: Store + ActionCreator + Reducer --
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class StartupStoreTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var mockPostService: MockPostService
@@ -48,7 +97,7 @@ class StartupStoreTest {
 
     @Test
     fun testInitialState() = runTest {
-        val store = StartupStore(mockPostService)
+        val store = StartupStore(StartupActionCreator(mockPostService))
         val state = store.state.value
         assertFalse(state.isLoading)
         assertFalse(state.isCompleted)
@@ -58,11 +107,8 @@ class StartupStoreTest {
 
     @Test
     fun testInitializeIntentWithNetworkCall() = runTest {
-        val store = StartupStore(mockPostService)
+        val store = StartupStore(StartupActionCreator(mockPostService))
         store.dispatch(StartupIntent.Initialize)
-
-        assertTrue(store.state.value.isLoading)
-
         advanceUntilIdle()
 
         assertFalse(store.state.value.isLoading)
@@ -73,23 +119,35 @@ class StartupStoreTest {
 
     @Test
     fun testAnimationFinishedIntent() = runTest {
-        val store = StartupStore(mockPostService)
+        val store = StartupStore(StartupActionCreator(mockPostService))
         store.dispatch(StartupIntent.AnimationFinished)
+
+        advanceUntilIdle()
 
         assertTrue(store.state.value.isFinished)
     }
 
     @Test
     fun testRetryIntent() = runTest {
-        val store = StartupStore(mockPostService)
+        val store = StartupStore(StartupActionCreator(mockPostService))
         store.dispatch(StartupIntent.Retry)
-
-        assertTrue(store.state.value.isLoading)
-
         advanceUntilIdle()
 
         assertFalse(store.state.value.isLoading)
         assertTrue(store.state.value.isCompleted)
         assertNotNull(store.state.value.post)
+    }
+
+    @Test
+    fun testNetworkErrorSetsErrorState() = runTest {
+        mockPostService.errorToThrow = RuntimeException("Connection failed")
+        val store = StartupStore(StartupActionCreator(mockPostService))
+        store.dispatch(StartupIntent.Initialize)
+
+        advanceUntilIdle()
+
+        assertFalse(store.state.value.isLoading)
+        assertFalse(store.state.value.isCompleted)
+        assertEquals("Connection failed", store.state.value.error)
     }
 }

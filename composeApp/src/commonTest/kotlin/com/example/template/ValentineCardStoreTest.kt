@@ -13,6 +13,80 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
+// -- Reducer Tests: Pure, no coroutines needed --
+
+class ValentineCardReducerTest {
+
+    @Test
+    fun updateRecipientNameSetsName() {
+        val state = ValentineCardState()
+        val result = valentineCardReducer(state, ValentineCardAction.UpdateRecipientName("Alice"))
+        assertEquals("Alice", result.recipientName)
+    }
+
+    @Test
+    fun revealSetsIsRevealed() {
+        val state = ValentineCardState()
+        val result = valentineCardReducer(state, ValentineCardAction.Reveal)
+        assertTrue(result.isRevealed)
+    }
+
+    @Test
+    fun setMessageUpdatesMessage() {
+        val state = ValentineCardState(message = "Old")
+        val result = valentineCardReducer(state, ValentineCardAction.SetMessage("New"))
+        assertEquals("New", result.message)
+    }
+
+    @Test
+    fun updateRecipientNamePreservesOtherFields() {
+        val state = ValentineCardState(
+            isRevealed = true,
+            message = "Hello",
+            background = ValentineBackground.ROMANTIC_SUNSET
+        )
+        val result = valentineCardReducer(state, ValentineCardAction.UpdateRecipientName("Bob"))
+        assertEquals("Bob", result.recipientName)
+        assertTrue(result.isRevealed)
+        assertEquals("Hello", result.message)
+        assertEquals(ValentineBackground.ROMANTIC_SUNSET, result.background)
+    }
+}
+
+// -- Action Creator Tests --
+
+class ValentineCardActionCreatorTest {
+
+    @Test
+    fun nextMessageCyclesThroughMessages() {
+        val messages = listOf("Msg 1", "Msg 2", "Msg 3")
+        val creator = ValentineCardActionCreator(messages)
+        val dispatched = mutableListOf<ValentineCardAction>()
+
+        assertEquals("Msg 1", creator.currentMessage())
+
+        creator.handleIntent(ValentineCardIntent.NextMessage) { dispatched.add(it) }
+        assertEquals(ValentineCardAction.SetMessage("Msg 2"), dispatched.last())
+
+        creator.handleIntent(ValentineCardIntent.NextMessage) { dispatched.add(it) }
+        assertEquals(ValentineCardAction.SetMessage("Msg 3"), dispatched.last())
+
+        creator.handleIntent(ValentineCardIntent.NextMessage) { dispatched.add(it) }
+        assertEquals(ValentineCardAction.SetMessage("Msg 1"), dispatched.last())
+    }
+
+    @Test
+    fun revealMessageDispatchesRevealAction() {
+        val creator = ValentineCardActionCreator(listOf("Msg"))
+        val dispatched = mutableListOf<ValentineCardAction>()
+
+        creator.handleIntent(ValentineCardIntent.RevealMessage) { dispatched.add(it) }
+        assertEquals(ValentineCardAction.Reveal, dispatched.single())
+    }
+}
+
+// -- Integration Tests: Store + ActionCreator + Reducer --
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ValentineCardStoreTest {
     private val testDispatcher = StandardTestDispatcher()

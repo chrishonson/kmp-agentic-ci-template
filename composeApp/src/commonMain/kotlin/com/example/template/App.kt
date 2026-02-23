@@ -15,7 +15,9 @@ fun App() {
         var showStartup by remember { mutableStateOf(true) }
 
         if (showStartup) {
-            val store: StartupStore = viewModel { StartupStore(providePostService()) }
+            val store: StartupStore = viewModel {
+                StartupStore(StartupActionCreator(providePostService()))
+            }
             StartupScreen(
                 store = store,
                 onFinished = { showStartup = false }
