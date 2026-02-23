@@ -1,1 +1,1 @@
-[x] add an example coroutine that is used to make a network call
+[x] clean up any test, coverage or detekt issues
